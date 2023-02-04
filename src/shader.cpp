@@ -41,12 +41,40 @@ namespace render{
 		glShaderSource(id, 1, &shader_string, &shader_string_length);
 		glCompileShader(id);// Compila o código do shader GLSL
 
-		//FIXME: o programa vai gerar erro com uma warning
+
+		//checa se a compilação foi ok
 		GLint compiled_ok;
 		glGetShaderiv(id, GL_COMPILE_STATUS, &compiled_ok);
-		if(!compiled_ok){
-			std::string error_msg("Failed to compile Shader program in");
-			std::throw_with_nested(std::runtime_error(error_msg + filename));
+		//checa se a compilação gerou erros ou warnings
+		GLint log_length = 0;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &log_length);
+		
+		if ( log_length != 0 ) {
+			GLchar* log = new GLchar[log_length];
+			glGetShaderInfoLog(id, log_length, &log_length, log);
+
+			std::string  output;
+			if ( !compiled_ok ) {
+				//erro gera uma exception
+				output += "ERROR: OpenGL compilation of \"";
+				output += filename;
+				output += "\" failed.\n";
+				output += "== Start of compilation log\n";
+				output += log;
+				output += "== End of compilation log\n";
+				std::throw_with_nested(std::runtime_error(output));
+			}
+			else{
+				//warning vai para std out
+				output += "WARNING: OpenGL compilation of \"";
+				output += filename;
+				output += "\".\n";
+				output += "== Start of compilation log\n";
+				output += log;
+				output += "== End of compilation log\n";
+				std::cout << output << std::endl;
+			}
+			delete [] log;
 		}
 	}
 
@@ -57,7 +85,7 @@ namespace render{
 			vertex_shader = new Shader(vertex_filename,GL_VERTEX_SHADER);
 			fragment_shader = new Shader(frag_filename,GL_FRAGMENT_SHADER);
 		}catch(...){
-			std::throw_with_nested("failed to generate shaders at GPU compile level");
+			std::throw_with_nested(std::runtime_error("failed to generate shaders at GPU compile level"));
 		}
 
 

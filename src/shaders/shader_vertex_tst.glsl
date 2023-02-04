@@ -3,7 +3,6 @@
 // Atributos de vértice recebidos como entrada ("in") pelo Vertex Shader.
 // Veja a função BuildTriangle() em "main.cpp".
 layout (location = 0) in vec3 model_coefficients;
-layout (location = 1) in vec4 color_coefficients;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -19,6 +18,5 @@ void main()
 	vec4 temp = vec4(model_coefficients.xyz,1.0);
     gl_Position = projection * view * model * temp;
 
-	cor_interpolada_pelo_rasterizador = color_coefficients;
+	cor_interpolada_pelo_rasterizador = vec4(1.0,1.0,1.0,1.0);
 }
-

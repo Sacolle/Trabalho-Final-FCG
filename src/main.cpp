@@ -21,6 +21,7 @@
 #include "vertex.hpp"
 #include "matrix.hpp"
 #include "camera.hpp"
+#include "mesh.hpp"
 
 auto make_cube() -> render::VertexArrayObj*; // Constrói triângulos para renderizaçãO
 auto make_plane() -> render::VertexArrayObj*; // Constrói triângulos para renderizaçãO
@@ -84,7 +85,6 @@ int main(int argc, char** argv)
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-
 	//carrega os shaders
 	render::GPUprogram *gpu_program;
 	try{
@@ -96,11 +96,21 @@ int main(int argc, char** argv)
 
     glEnable(GL_DEPTH_TEST);
 	auto camera = new entity::camera(true);
-    auto vao = make_plane();
+    //auto vao = make_plane();
 
-	auto model = mtx::indentity();
+	render::Mesh *mesh;
+	try{
+		mesh = new render::Mesh("models/teapot.obj", "models/materials");
+	}catch(const std::exception& e){
+		print_exception(e,0);
+		std::exit(EXIT_FAILURE);
+	}
 
-	float phi = 0, theta = 0;
+	auto vao = mesh->load_to_gpu();
+	auto num_verts = mesh->get_num_indices();
+	auto model = mtx::indentity() * 0.5f;
+
+	float phi = 0, theta = 0, distance = 2.5f;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -111,12 +121,13 @@ int main(int argc, char** argv)
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+			ImGui::Begin("Cam");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Text("Move the camera");               // Display some text (you can use a format strings too)
 
-            ImGui::SliderFloat("phi", &phi, 0.0f, 3.14f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::SliderFloat("theta", &theta, 0.0f, 3.14f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat("phi", &phi, 0.0f, 3.14f);
+            ImGui::SliderFloat("theta", &theta, 0.0f, 3.14f);
+            ImGui::SliderFloat("distance", &distance, 2.5f, 10.0f);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
@@ -129,23 +140,25 @@ int main(int argc, char** argv)
 
 
 		gpu_program->use_prog();
-		camera->update_position(phi,theta,2.5f);
-
+		camera->update_position(phi,theta,distance);
+		
+		//associated with the camera
 		gpu_program->set_uniform_value("view",camera->get_view_ptr());
 		gpu_program->set_uniform_value("projection",camera->get_projection_ptr());
+		//associated with the model
 		gpu_program->set_uniform_value("model",glm::value_ptr(model));
 
-		vao->bind();
-		glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_BYTE,0);
-		vao->unbind();
-
+		//vao->bind();
+		glBindVertexArray(vao);
+		glDrawElements(GL_TRIANGLES,num_verts,GL_UNSIGNED_INT,(void*)0);
+		glBindVertexArray(0);
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
 	//manual clear dos objetos
 	delete camera;
-	delete vao;
+	delete mesh;
 	delete gpu_program;
 
     // Finalizamos o uso dos recursos do sistema operacional
@@ -225,10 +238,10 @@ auto make_cube() -> render::VertexArrayObj* {
 
 auto make_plane() -> render::VertexArrayObj* {
 	GLfloat verts[] = {
-         1.0f,  0.0f,  1.0f, 1.0f,
-         1.0f,  0.0f, -1.0f, 1.0f,
-        -1.0f,  0.0f,  1.0f, 1.0f,
-        -1.0f,  0.0f, -1.0f, 1.0f,
+         1.0f,  0.0f,  1.0f,
+         1.0f,  0.0f, -1.0f,
+        -1.0f,  0.0f,  1.0f,
+        -1.0f,  0.0f, -1.0f,
 	};
 	GLfloat colors[] = {
         1.0f, 0.0f, 0.0f, 1.0f,
@@ -247,7 +260,7 @@ auto make_plane() -> render::VertexArrayObj* {
 	auto vbo_verts = new render::VertexBufferObj(GL_ARRAY_BUFFER);
 	vbo_verts->bind();
 	vbo_verts->load_data(sizeof(verts),verts);
-	vbo_verts->atrib_pointer(0,4,GL_FLOAT);
+	vbo_verts->atrib_pointer(0,3,GL_FLOAT);
 	vbo_verts->unbind();
 
 	vao->attach_verts(vbo_verts);

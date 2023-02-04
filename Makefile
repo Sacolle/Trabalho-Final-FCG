@@ -42,6 +42,9 @@ $(OBJDIR)/shader.o : $(SRCDIR)/shader.cpp $(addprefix $(INCLUDEDIR)/,shader.hpp)
 $(OBJDIR)/vertex.o : $(SRCDIR)/vertex.cpp $(addprefix $(INCLUDEDIR)/,vertex.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
+$(OBJDIR)/mesh.o : $(SRCDIR)/mesh.cpp $(addprefix $(INCLUDEDIR)/,mesh.hpp)
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
 #builds the src files versão generica e unreliable
 #$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCLUDEDIR)/%.hpp
 #	$(CXX) -c -o $@ $< $(INCLUDE) $(CPPFLAGS) 
@@ -58,6 +61,4 @@ $(OBJDIR)/glad.o: $(LIBSDIR)/glad.c
 clean:
 	rm -f src/obj/*.o
 run: ./bin/main
-	./bin/main src/shaders/shader_vertex.glsl src/shaders/shader_fragment.glsl
-tst:
-	@echo $(OBJDIR)/main.cpp
+	./bin/main src/shaders/shader_vertex_tst.glsl src/shaders/shader_fragment.glsl
