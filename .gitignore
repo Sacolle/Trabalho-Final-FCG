@@ -1,0 +1,5 @@
+bin/*
+parendizado-c++
+.vscode
+models
+src/obj/*
