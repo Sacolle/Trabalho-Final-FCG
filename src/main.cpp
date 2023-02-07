@@ -5,6 +5,7 @@
 // Headers abaixo são específicos de C++
 #include <vector>
 #include <iostream>
+#include <memory>
 
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
@@ -18,13 +19,11 @@
 
 //minhas implementações
 #include "shader.hpp"
-#include "vertex.hpp"
 #include "matrix.hpp"
-#include "camera.hpp"
+#include "entities.hpp"
 #include "mesh.hpp"
 
-auto make_cube() -> render::VertexArrayObj*; // Constrói triângulos para renderizaçãO
-auto make_plane() -> render::VertexArrayObj*; // Constrói triângulos para renderizaçãO
+#define DRAWDBG(x) if(!x){std::cerr << "DRAW NOT ALLOCATED IN LINE: " << __LINE__ << std::endl; exit(1);}
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
@@ -38,11 +37,6 @@ float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
 
-/*TODO:
-	* Implementar a camera de forma rudimentar e fazer display em perspectiva de um objeto 3d
-		* Gerar uma classe base de coordenadas
-		* Abstrair a camera para uma classe
-*/
 
 int main(int argc, char** argv)
 {
@@ -85,30 +79,37 @@ int main(int argc, char** argv)
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-	//carrega os shaders
-	render::GPUprogram *gpu_program;
-	try{
-		gpu_program = new render::GPUprogram(argv[1],argv[2]);	
-	}catch(const std::exception& e){
-		print_exception(e,0);
-		std::exit(EXIT_FAILURE);
-	}
-
     glEnable(GL_DEPTH_TEST);
-	auto camera = new entity::camera(true);
-    //auto vao = make_plane();
 
-	render::Mesh *mesh;
+	//scope em que os valores alocados vao ser dropados
+	{
+	//carrega os shaders
+	std::unique_ptr<render::GPUprogram> gpu_program;
 	try{
-		mesh = new render::Mesh("models/teapot.obj", "models/materials");
+		std::unique_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(argv[1],argv[2]));
+		gpu_program = std::move(gpu_program_expt);
+	}catch(const std::exception& e){
+		print_exception(e,0);
+		std::exit(EXIT_FAILURE);
+	}
+	std::unique_ptr<entity::Camera> camera (new entity::Camera(true));
+
+	std::unique_ptr<render::Mesh> teapot;
+	std::unique_ptr<render::Mesh> plane;
+	try{
+		std::unique_ptr<render::Mesh> teapot_expt (new render::Mesh("models/teapot.obj", "models/materials"));
+		std::unique_ptr<render::Mesh> plane_expt (new render::Mesh("models/plane.obj", "models/materials"));
+		teapot = std::move(teapot_expt);
+		plane = std::move(plane_expt);
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
 
-	auto vao = mesh->load_to_gpu();
-	auto num_verts = mesh->get_num_indices();
-	auto model = mtx::indentity() * 0.5f;
+	teapot->load_to_gpu();
+	plane->load_to_gpu();
+	auto tea_model = mtx::scale(0.5f,0.5f,0.5f) * mtx::translate(1.0f,1.0f,1.0f);
+	auto plane_model = mtx::indentity();
 
 	float phi = 0, theta = 0, distance = 2.5f;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
@@ -138,7 +139,6 @@ int main(int argc, char** argv)
         glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
-
 		gpu_program->use_prog();
 		camera->update_position(phi,theta,distance);
 		
@@ -146,21 +146,17 @@ int main(int argc, char** argv)
 		gpu_program->set_uniform_value("view",camera->get_view_ptr());
 		gpu_program->set_uniform_value("projection",camera->get_projection_ptr());
 		//associated with the model
-		gpu_program->set_uniform_value("model",glm::value_ptr(model));
+		gpu_program->set_uniform_value("model",glm::value_ptr(tea_model));
+		DRAWDBG(teapot->draw());
 
-		//vao->bind();
-		glBindVertexArray(vao);
-		glDrawElements(GL_TRIANGLES,num_verts,GL_UNSIGNED_INT,(void*)0);
-		glBindVertexArray(0);
+		gpu_program->set_uniform_value("model",glm::value_ptr(plane_model));
+		DRAWDBG(plane->draw());
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
 	//manual clear dos objetos
-	delete camera;
-	delete mesh;
-	delete gpu_program;
-
+	}  //fim do escopo das alocações com smart pointers
     // Finalizamos o uso dos recursos do sistema operacional
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -169,118 +165,6 @@ int main(int argc, char** argv)
 	glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
-}
-
-auto make_cube() -> render::VertexArrayObj* {
-	GLfloat verts[] = {
-        -0.5f,  0.5f,  0.5f, 1.0f,
-        -0.5f, -0.5f,  0.5f, 1.0f,
-         0.5f, -0.5f,  0.5f, 1.0f,
-         0.5f,  0.5f,  0.5f, 1.0f,
-        -0.5f,  0.5f, -0.5f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 1.0f,
-         0.5f, -0.5f, -0.5f, 1.0f,
-         0.5f,  0.5f, -0.5f, 1.0f,
-	};
-	GLfloat colors[] = {
-        1.0f, 0.5f, 0.0f, 1.0f,
-        1.0f, 0.5f, 0.0f, 1.0f,
-        0.0f, 0.5f, 1.0f, 1.0f,
-        0.0f, 0.5f, 1.0f, 1.0f,
-        1.0f, 0.5f, 0.0f, 1.0f,
-        1.0f, 0.5f, 0.0f, 1.0f,
-        0.0f, 0.5f, 1.0f, 1.0f,
-        0.0f, 0.5f, 1.0f, 1.0f,
-	};
-	GLubyte indices[] = {
-        0, 1, 2, // triângulo 1 
-        7, 6, 5, // triângulo 2 
-        3, 2, 6, // triângulo 3 
-        4, 0, 3, // triângulo 4 
-        4, 5, 1, // triângulo 5 
-        1, 5, 6, // triângulo 6 
-        0, 2, 3, // triângulo 7 
-        7, 5, 4, // triângulo 8 
-        3, 6, 7, // triângulo 9 
-        4, 3, 7, // triângulo 10
-        4, 1, 0, // triângulo 11
-        1, 6, 2, // triângulo 12
-	};
-	//TODO: converter isso para openGL basico de novo
-	auto vao = new render::VertexArrayObj();
-	vao->bind();
-
-	auto vbo_verts = new render::VertexBufferObj(GL_ARRAY_BUFFER);
-	vbo_verts->bind();
-	vbo_verts->load_data(sizeof(verts),verts);
-	vbo_verts->atrib_pointer(0,4,GL_FLOAT);
-	vbo_verts->unbind();
-
-	vao->attach_verts(vbo_verts);
-
-	auto vbo_colors = new render::VertexBufferObj(GL_ARRAY_BUFFER);
-	vbo_colors->bind();
-	vbo_colors->load_data(sizeof(colors),colors);
-	vbo_colors->atrib_pointer(1,4,GL_FLOAT);
-	vbo_colors->unbind();
-
-	vao->attach_colors(vbo_colors);
-
-	auto vbo_indices = new render::VertexBufferObj(GL_ELEMENT_ARRAY_BUFFER);
-	vbo_indices->bind();
-	vbo_indices->load_data(sizeof(indices),indices);
-	//não se realiza o unbind dos indices
-	vao->attach_indices(vbo_indices);
-
-	vao->unbind();
-	return vao;
-}
-
-auto make_plane() -> render::VertexArrayObj* {
-	GLfloat verts[] = {
-         1.0f,  0.0f,  1.0f,
-         1.0f,  0.0f, -1.0f,
-        -1.0f,  0.0f,  1.0f,
-        -1.0f,  0.0f, -1.0f,
-	};
-	GLfloat colors[] = {
-        1.0f, 0.0f, 0.0f, 1.0f,
-        0.0f, 1.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f, 1.0f,
-	};
-	GLubyte indices[] = {
-        0, 1, 2, // triângulo 1 
-        1, 2, 3, // triângulo 2 
-	};
-	//TODO: converter isso para openGL basico de novo
-	auto vao = new render::VertexArrayObj();
-	vao->bind();
-
-	auto vbo_verts = new render::VertexBufferObj(GL_ARRAY_BUFFER);
-	vbo_verts->bind();
-	vbo_verts->load_data(sizeof(verts),verts);
-	vbo_verts->atrib_pointer(0,3,GL_FLOAT);
-	vbo_verts->unbind();
-
-	vao->attach_verts(vbo_verts);
-
-	auto vbo_colors = new render::VertexBufferObj(GL_ARRAY_BUFFER);
-	vbo_colors->bind();
-	vbo_colors->load_data(sizeof(colors),colors);
-	vbo_colors->atrib_pointer(1,4,GL_FLOAT);
-	vbo_colors->unbind();
-
-	vao->attach_colors(vbo_colors);
-
-	auto vbo_indices = new render::VertexBufferObj(GL_ELEMENT_ARRAY_BUFFER);
-	vbo_indices->bind();
-	vbo_indices->load_data(sizeof(indices),indices);
-	//não se realiza o unbind dos indices
-	vao->attach_indices(vbo_indices);
-
-	vao->unbind();
-	return vao;
 }
 
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){

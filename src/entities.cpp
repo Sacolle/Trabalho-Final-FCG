@@ -2,11 +2,11 @@
 #include <exception>
 #include <stdexcept>
 
-#include "camera.hpp"
+#include "entities.hpp"
 #include "matrix.hpp"
 
 namespace entity{
-	camera::camera(bool is_perspective){
+	Camera::Camera(bool is_perspective){
 		//tem q se incializar o point_c com um valor não nulo para pelo menos uma das coords além de w
 		point_c = glm::vec4(0.0f,0.0f,1.0f,1.0f);
 		point_look_at = glm::vec4(0.0f,0.0f,0.0f,1.0f);
@@ -21,7 +21,7 @@ namespace entity{
 			std::throw_with_nested(std::invalid_argument("Não implementei para ortográfico, LOL"));
 		}
 	}
-	auto camera::update_position(float phi, float theta, float radius) -> void{
+	auto Camera::update_position(float phi, float theta, float radius) -> void{
         float y = radius*sin(phi);
         float z = radius*cos(phi)*cos(theta);
         float x = radius*cos(phi)*sin(theta);

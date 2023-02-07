@@ -26,6 +26,7 @@ namespace render{
 		auto& attrib = reader.GetAttrib();
 		auto& shapes = reader.GetShapes();
 
+		//TODO: change for when shapes > 1
 		for(auto idx : shapes[0].mesh.indices){
 			indexs.push_back(GLuint(idx.vertex_index));
 		}
@@ -65,8 +66,20 @@ namespace render{
 		buffer_ids.push_back(indices_id);
 
 		glBindVertexArray(0);
+		in_gpu = true;
 		return vao_id;
 	}
+
+	auto Mesh::draw() -> bool {
+		if(!in_gpu){
+			return false;
+		}
+		glBindVertexArray(vao_id);
+		glDrawElements(GL_TRIANGLES,indexs.size(),GL_UNSIGNED_INT,(void*)0);
+		glBindVertexArray(0);
+		return true;
+	}
+
 	auto Mesh::delete_gpu_data() -> void{
 		if(in_gpu){
 			glDeleteBuffers(1,&vao_id);
@@ -74,5 +87,6 @@ namespace render{
 				glDeleteBuffers(1,&vbo_id);
 			}
 		}
+		in_gpu = false;
 	}
 }

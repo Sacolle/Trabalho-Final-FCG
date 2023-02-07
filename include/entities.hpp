@@ -4,9 +4,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 namespace entity{
-	class camera {
+	class Camera {
 		public:
-			camera(bool is_perspective);
+			Camera(bool is_perspective);
 			auto update_position(float phi, float theta, float radius) -> void;
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }

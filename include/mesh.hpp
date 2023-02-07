@@ -12,6 +12,7 @@ namespace render{
 			~Mesh();
 
 			auto load_to_gpu() -> GLuint; //retorna o id do VAO
+			auto draw() -> bool;
 			auto delete_gpu_data() -> void;
 
 			inline auto get_vao_id() -> GLuint { return vao_id; }
