@@ -86,14 +86,13 @@ namespace render{
 		in_gpu = true;
 		return vao_id;
 	}
-	auto ObjMesh::draw() -> bool {
+	auto ObjMesh::draw() -> void {
 		if(!in_gpu){
 			load_to_gpu();
 		}
 		glBindVertexArray(vao_id);
 		glDrawElements(GL_TRIANGLES,indexs.size(),GL_UNSIGNED_INT,(void*)0);
 		glBindVertexArray(0);
-		return true;
 	}
 
 
@@ -157,13 +156,12 @@ namespace render{
 		in_gpu = true;
 		return vao_id;
 	}
-	auto WireMesh::draw() -> bool{
+	auto WireMesh::draw() -> void{
 		if(!in_gpu){
 			load_to_gpu();
 		}
 		glBindVertexArray(vao_id);
 		glDrawElements(GL_LINES,indexs.size(),GL_UNSIGNED_INT,(void*)0);
 		glBindVertexArray(0);
-		return true;
 	}
 }

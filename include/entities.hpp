@@ -4,10 +4,11 @@
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-#include <glm/vec3.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "mesh.hpp"
+#include "matrix.hpp"
+#include "shader.hpp"
 
 namespace entity{
 	class Geometry{
@@ -23,9 +24,8 @@ namespace entity{
 			auto translate_foward(float speed) -> void;
 			auto translate_direction(glm::vec4 direction, float speed) -> void;
 			
-			auto rotate_increment(float x_axis, float y_axis, float z_axis) -> void;
+			auto rotate_increment(float x, float y, float z) -> void;
 			//rotate axis?
-
 			/*
 			auto in_2d_bounds(Geometry &geometry) -> bool;
 			auto in_3d_bounds(Geometry &geometry) -> bool;
@@ -39,6 +39,9 @@ namespace entity{
 			}
 
 		protected:
+			inline auto get_scaling_ptr() -> float* {
+				return glm::value_ptr(scaling);
+			}
 			inline auto get_rotaion_ptr() -> float* {
 				return glm::value_ptr(rotation);
 			}
@@ -77,16 +80,37 @@ namespace entity{
 	//it passes the parameters to the gpu
 	//it has to hold a reference to:
 	//	- the gpu program
+	//	that acesses the Geometries
+	/*		- the scaling mtx
+	*		- the rotation mtx
+	*		- the translation mtx */
 	//	- the Mesh it renders
 	class Entity : public Geometry{
 		public:
-			//usar uma lista de atributos? ou fazer default
-			Entity();
+			//full constructor
+			Entity(std::shared_ptr<render::GPUprogram> gpu_program,
+				std::shared_ptr<render::ObjMesh> mesh,
+				std::shared_ptr<render::GPUprogram> gpu_program_wire_mesh,
+				std::shared_ptr<render::WireMesh> wire_mesh,
+				glm::vec4 cords, glm::vec4 direction,
+				float x_angle, float y_angle, float z_angle,
+				float x_scale, float y_scale, float z_scale,
+				float x_radius, float z_radius, float height
+			);
+			//simpler 
+			Entity(std::shared_ptr<render::GPUprogram> gpu_program,
+				std::shared_ptr<render::ObjMesh> mesh,
+				glm::vec4 cords
+			);
 
-			auto draw()->bool;
+			auto draw() -> void;
+			auto draw_wire() -> void;
 		private:
+			std::shared_ptr<render::GPUprogram> gpu_program;
 			std::shared_ptr<render::ObjMesh> mesh;
-			std::shared_ptr<render::WireMesh> mesh;
+
+			std::shared_ptr<render::GPUprogram> gpu_program_wire_mesh;
+			std::shared_ptr<render::WireMesh> wire_mesh;
 	};
 
 	class Camera {

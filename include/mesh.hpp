@@ -12,7 +12,7 @@ namespace render{
 			virtual ~Mesh();
 			//funções virtuais puras que devem ser implementadas
 			virtual auto load_to_gpu() -> GLuint = 0; 
-			virtual auto draw() -> bool = 0;
+			virtual auto draw() -> void = 0;
 
 			auto delete_gpu_data() -> void;
 		
@@ -29,7 +29,7 @@ namespace render{
 			virtual ~ObjMesh();
 
 			auto load_to_gpu() -> GLuint; //retorna o id do VAO
-			auto draw() -> bool;
+			auto draw() -> void;
 			//auto delete_gpu_data() -> void;
 
 			inline auto get_vao_id() -> GLuint { return vao_id; }
@@ -41,16 +41,13 @@ namespace render{
 			//std::vector<tinyobj::real_t> normals;
 			//std::vector<tinyobj::real_t> normals;
 	};
-	//FIXME: remover maybe
 	class WireMesh : public Mesh{
 		public:
 			WireMesh(glm::vec3 pos, float theta, float phi, float radius, float height, float scale);
 			virtual ~WireMesh();
-			
-			inline auto get_in_gpu() -> bool { return in_gpu; }
 
 			auto load_to_gpu() -> GLuint; //retorna o id do VAO
-			auto draw() -> bool;
+			auto draw() -> void;
 		private:
 			std::vector<GLfloat> verts;
 			std::vector<GLuint> indexs;

@@ -23,14 +23,6 @@
 #include "entities.hpp"
 #include "mesh.hpp"
 
-#define DBG 
-
-#ifdef DBG
-#define DRAWDBG(x) if(!x){std::cerr << "DRAW NOT ALLOCATED IN LINE: " << __LINE__ << std::endl; exit(1);}
-#else
-#define DRAWDBG(x) x;
-#endif
-
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
 void print_exception(const std::exception& e, int level);
@@ -90,9 +82,9 @@ int main(int argc, char** argv)
 	//scope em que os valores alocados vao ser dropados
 	{
 	//carrega os shaders
-	std::unique_ptr<render::GPUprogram> gpu_program;
+	std::shared_ptr<render::GPUprogram> gpu_program;
 	try{
-		std::unique_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(argv[1],argv[2]));
+		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(argv[1],argv[2]));
 		gpu_program = std::move(gpu_program_expt);
 	}catch(const std::exception& e){
 		print_exception(e,0);
@@ -100,24 +92,34 @@ int main(int argc, char** argv)
 	}
 	std::unique_ptr<entity::Camera> camera (new entity::Camera(true));
 
-	std::unique_ptr<render::ObjMesh> teapot;
-	std::unique_ptr<render::ObjMesh> plane;
+	std::shared_ptr<render::ObjMesh> teapot_mesh;
+	std::shared_ptr<render::ObjMesh> plane_mesh;
 	try{
-		std::unique_ptr<render::ObjMesh> teapot_expt (new render::ObjMesh("models/teapot.obj", "models/materials"));
-		std::unique_ptr<render::ObjMesh> plane_expt (new render::ObjMesh("models/plane.obj", "models/materials"));
-		teapot = std::move(teapot_expt);
-		plane = std::move(plane_expt);
+		std::shared_ptr<render::ObjMesh> teapot_expt (new render::ObjMesh("models/teapot.obj", "models/materials"));
+		std::shared_ptr<render::ObjMesh> plane_expt (new render::ObjMesh("models/plane.obj", "models/materials"));
+		teapot_mesh = std::move(teapot_expt);
+		plane_mesh = std::move(plane_expt);
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
 
-	teapot->load_to_gpu();
-	plane->load_to_gpu();
-	auto tea_model = mtx::scale(0.5f,0.5f,0.5f) * mtx::translate(1.0f,1.0f,1.0f);
-	mtx::print(tea_model);
-	auto plane_model = mtx::indentity();
+	std::unique_ptr<entity::Entity> plane(
+		new entity::Entity(
+			gpu_program, plane_mesh,
+			glm::vec4(0,0,0,1)
+		)
+	);
 
+	std::unique_ptr<entity::Entity> teapot(
+		new entity::Entity(
+			gpu_program, teapot_mesh,
+			nullptr, nullptr,
+			glm::vec4(0,1,0,1), glm::vec4(1,0,0,1),
+			0, 0, 0, 0.5, 1, 0.5, 1, 1, 1
+		)
+	);
+	
 	float phi = 0, theta = 0, distance = 2.5f;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -148,16 +150,14 @@ int main(int argc, char** argv)
 
 		gpu_program->use_prog();
 		camera->update_position(phi,theta,distance);
-		
+		//TODO: make the controls now dummass
+		teapot->translate_foward(0.05f);
 		//associated with the camera
 		gpu_program->set_uniform_value("view",camera->get_view_ptr());
 		gpu_program->set_uniform_value("projection",camera->get_projection_ptr());
 		//associated with the model
-		gpu_program->set_uniform_value("model",glm::value_ptr(tea_model));
-		DRAWDBG(teapot->draw());
-
-		gpu_program->set_uniform_value("model",glm::value_ptr(plane_model));
-		DRAWDBG(plane->draw());
+		plane->draw();
+		teapot->draw();
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
