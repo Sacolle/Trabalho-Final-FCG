@@ -108,7 +108,7 @@ namespace render{
 		glDeleteProgram(id);
 	}
 
-	auto GPUprogram::set_uniform_value(const char* atrib, const GLfloat *value) -> void{
+	auto GPUprogram::set_uniform_mtx(const char* atrib, const GLfloat *value) -> void{
 		GLint model_uniform;
 		//checa se o atrib existe no mapa
 		if(uniforms.count(atrib)){
@@ -118,6 +118,17 @@ namespace render{
 			uniforms[atrib] = model_uniform;
 		}
 		glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , value);
+	}
+	auto GPUprogram::set_uniform_bool(const char* atrib, const bool value) -> void{
+		GLint model_uniform;
+		//checa se o atrib existe no mapa
+		if(uniforms.count(atrib)){
+			model_uniform = uniforms[atrib];
+		}else{
+			model_uniform = glGetUniformLocation(id, atrib);
+			uniforms[atrib] = model_uniform;
+		}
+		glUniform1i(model_uniform, value);
 	}
  	auto GPUprogram::use_prog() -> void {
 		glUseProgram(id);

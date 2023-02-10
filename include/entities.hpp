@@ -11,31 +11,37 @@
 #include "shader.hpp"
 
 namespace entity{
+	//TODO: move to namespace utils when adding the bbox checks
+	enum class BBoxType{
+		Rectangle,
+		Cylinder,
+		//EllipticalCylinder, //it's just a scaled cylinder
+		Sphere
+	};
+
 	class Geometry{
 		public:
 			Geometry(glm::vec4 cords, glm::vec4 direction,
 				float x_angle, float y_angle, float z_angle,
 				float x_scale, float y_scale, float z_scale,
-				float x_radius, float z_radius, float height);
+				float x_radius, float z_radius, float height, BBoxType bbox_type);
 			Geometry(glm::vec4 cords);
 
 			virtual ~Geometry();
 			//normalize the vectors
 			auto translate_foward(float speed) -> void;
 			auto translate_direction(glm::vec4 direction, float speed) -> void;
-			
 			auto rotate_increment(float x, float y, float z) -> void;
+			auto set_cords(float x, float y, float z) -> void;
+			auto set_angles(float x, float y, float z) -> void;
+			auto set_y_angle(float y) -> void;
 			//rotate axis?
 			/*
 			auto in_2d_bounds(Geometry &geometry) -> bool;
 			auto in_3d_bounds(Geometry &geometry) -> bool;
 			*/
-
-			inline auto set_cords(float x, float y, float z) -> void {
-				cords.x = x; cords.y = y; cords.z = z;
-			}
-			inline auto set_rotation(float x, float y, float z) -> void {
-				x_angle = x; y_angle = y; z_angle = z;
+			inline auto set_base_translate(float x, float y, float z) -> void {
+				base_translate = mtx::translate(x,y,z);
 			}
 
 		protected:
@@ -48,22 +54,30 @@ namespace entity{
 			inline auto get_translation_ptr() -> float* {
 				return glm::value_ptr(translation);
 			}
-
+			inline auto get_base_translate_ptr() -> float* {
+				return glm::value_ptr(base_translate);
+			}
+			//values for the bounding box (could be a cilinder, elipsical cilinder or sphere too)
+			float x_radius, z_radius ,height;
+			BBoxType bbox_type;
 		private:
 			//world coordinates
 			glm::vec4 cords;
 			//vector that points foward 
 			glm::vec4 direction;
+			glm::vec4 base_direction;
 			//values of the rotation angles for the axis
 			float x_angle, y_angle, z_angle;
 			//values of the scaling factors
 			float x_scale, y_scale, z_scale;
-			//values for the bounding box (could be a cilinder, elipsical cilinder or sphere too)
-			float x_radius, z_radius ,height;
+
 
 			glm::mat4 rotation;
 			glm::mat4 translation;
 			glm::mat4 scaling;
+
+			//correcting translation for when models origins are not at their center
+			glm::mat4 base_translate;
 
 			inline auto set_rotation() -> void{
 				rotation = mtx::rot_z(z_angle) * mtx::rot_y(y_angle) * mtx::rot_x(x_angle);
@@ -90,12 +104,11 @@ namespace entity{
 			//full constructor
 			Entity(std::shared_ptr<render::GPUprogram> gpu_program,
 				std::shared_ptr<render::ObjMesh> mesh,
-				std::shared_ptr<render::GPUprogram> gpu_program_wire_mesh,
 				std::shared_ptr<render::WireMesh> wire_mesh,
 				glm::vec4 cords, glm::vec4 direction,
 				float x_angle, float y_angle, float z_angle,
 				float x_scale, float y_scale, float z_scale,
-				float x_radius, float z_radius, float height
+				float x_radius, float z_radius, float height, BBoxType bbox_type
 			);
 			//simpler 
 			Entity(std::shared_ptr<render::GPUprogram> gpu_program,
@@ -108,14 +121,13 @@ namespace entity{
 		private:
 			std::shared_ptr<render::GPUprogram> gpu_program;
 			std::shared_ptr<render::ObjMesh> mesh;
-
-			std::shared_ptr<render::GPUprogram> gpu_program_wire_mesh;
 			std::shared_ptr<render::WireMesh> wire_mesh;
 	};
 
 	class Camera {
 		public:
 			Camera(bool is_perspective);
+			auto update_aspect_ratio(float aspect_ratio) -> void;
 			auto update_position(float phi, float theta, float radius) -> void;
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }
@@ -123,6 +135,7 @@ namespace entity{
 			glm::vec4 point_c;
 			glm::vec4 up_vec;
 			glm::vec4 point_look_at;
+			float aspect_ratio;
 
 			glm::mat4 projection;
 			glm::mat4 view;

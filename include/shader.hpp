@@ -19,7 +19,8 @@ namespace render{
 			GPUprogram(const char* vertex_filename,const char* frag_filename);
 			~GPUprogram();
 			auto use_prog() -> void;
-			auto set_uniform_value(const char* atrib, const GLfloat *value) -> void;
+			auto set_uniform_mtx(const char* atrib, const GLfloat *value) -> void;
+			auto set_uniform_bool(const char* atrib, const bool value) -> void;
 			inline auto get_prog_id() -> GLuint{ return id; }
 		private:
 			GLuint id;

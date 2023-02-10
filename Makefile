@@ -27,10 +27,10 @@ STATIC_OBJS := $(addprefix $(OBJDIR)/, $(_STATIC_OBJS))
 bin/main: $(OBJS) $(STATIC_OBJS) ./lib/libglfw3.a
 	$(CXX) -o $@ $^ $(CPPFLAGS) $(FLAG_LIBS) 
 
-$(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(wildcard ./include/*.hpp)
+$(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(wildcard ./include/*.hpp) SRC
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/entities.o : $(SRCDIR)/entities.cpp $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp)
+$(OBJDIR)/entities.o : $(SRCDIR)/entities.cpp $(SRCDIR)/matrix.cpp $(SRCDIR)/shader.cpp $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp shader.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 $(OBJDIR)/matrix.o : $(SRCDIR)/matrix.cpp $(addprefix $(INCLUDEDIR)/,matrix.hpp)

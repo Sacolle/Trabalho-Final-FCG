@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 
+
 namespace render{
 
 	/*****************************
@@ -99,28 +100,38 @@ namespace render{
 	/*****************************
 		WireMesh implementation
 	******************************/
-	WireMesh::WireMesh(glm::vec3 pos, float theta, float phi, float radius, float height, float scale){
-		float x = pos.x;
-		float y = pos.y;
-		float z = pos.z;
+	WireMesh::WireMesh(int type){
 		
-		verts = std::vector<GLfloat>{
-			x - radius, y + height, z - radius,
-			x + radius, y + height, z - radius,
-			x - radius, y + height, z + radius,
-			x + radius, y + height, z + radius,
-			x - radius, y - height, z - radius,
-			x + radius, y - height, z - radius,
-			x - radius, y - height, z + radius,
-			x + radius, y - height, z + radius,
-		};
-		
-		indexs = std::vector<GLuint>{
-			0, 1, 0, 2, 0, 4,
-			3, 1, 3, 2, 3, 7,
-			6, 2, 6, 4, 6, 7,
-			5, 1, 5, 4, 5, 7
-		};
+		switch (type){
+		case 0:
+			verts = std::vector<GLfloat>{
+				-1.0f, +1.0f, -1.0f,
+				+1.0f, +1.0f, -1.0f,
+				-1.0f, +1.0f, +1.0f,
+				+1.0f, +1.0f, +1.0f,
+				-1.0f, -1.0f, -1.0f,
+				+1.0f, -1.0f, -1.0f,
+				-1.0f, -1.0f, +1.0f,
+				+1.0f, -1.0f, +1.0f,
+			};
+			
+			indexs = std::vector<GLuint>{
+				0, 1, 0, 2, 0, 4,
+				3, 1, 3, 2, 3, 7,
+				6, 2, 6, 4, 6, 7,
+				5, 1, 5, 4, 5, 7
+			};
+			break;
+		case 1:
+			std::throw_with_nested(std::runtime_error("tipo de BBox Cylinder não implementado"));
+			break;
+		case 2:
+			std::throw_with_nested(std::runtime_error("tipo de BBox Sphere não implementado"));
+			break;
+		default:
+			std::throw_with_nested(std::runtime_error("tipo de BBox não reconhecido"));
+			break;
+		}
 	}
 	WireMesh::~WireMesh(){ }
 	auto WireMesh::load_to_gpu() -> GLuint{

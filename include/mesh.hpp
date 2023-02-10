@@ -4,7 +4,7 @@
 
 #include "tiny_obj_loader.h"
 #include <glad/glad.h>
-#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 namespace render{
 	class Mesh{
@@ -43,7 +43,8 @@ namespace render{
 	};
 	class WireMesh : public Mesh{
 		public:
-			WireMesh(glm::vec3 pos, float theta, float phi, float radius, float height, float scale);
+			//usa-se static_cast para obter o typo de bbox como int
+			WireMesh(int type);
 			virtual ~WireMesh();
 
 			auto load_to_gpu() -> GLuint; //retorna o id do VAO
