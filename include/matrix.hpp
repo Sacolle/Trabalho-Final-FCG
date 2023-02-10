@@ -11,7 +11,8 @@ namespace mtx{
 	auto rot_y(float angle) -> glm::mat4;
 	auto rot_z(float angle) -> glm::mat4;
 	auto norm(glm::vec4 v) -> float;
-	auto rotate(float angle, glm::mat4 axis) -> glm::mat4;
+	auto norm(glm::vec3 v) -> float;
+	auto rotate_rodriguez(float angle, glm::mat4 axis) -> glm::mat4;
 	auto cross_prod(glm::vec4 u, glm::vec4 v) -> glm::vec4;
 	//throws errors
 	auto dot_prod(glm::vec4 u, glm::vec4 v) -> float;
@@ -19,4 +20,6 @@ namespace mtx{
 	auto cam_view(glm::vec4 pos_c, glm::vec4 view_vec, glm::vec4 up_vec) -> glm::mat4;
 	auto orthographic(float l,float r,float b,float t,float n,float f) -> glm::mat4;
 	auto perspective(float fov,float aspect,float n,float f) -> glm::mat4;
+
+	auto print(glm::mat4 mtx) -> void;
 }

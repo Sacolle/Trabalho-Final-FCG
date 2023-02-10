@@ -30,7 +30,7 @@ bin/main: $(OBJS) $(STATIC_OBJS) ./lib/libglfw3.a
 $(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(wildcard ./include/*.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/entities.o : $(SRCDIR)/entities.cpp $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp)
+$(OBJDIR)/entities.o : $(SRCDIR)/entities.cpp $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp mesh.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 $(OBJDIR)/matrix.o : $(SRCDIR)/matrix.cpp $(addprefix $(INCLUDEDIR)/,matrix.hpp)

@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <iostream>
  
 namespace mtx{
 	inline auto matrix(
@@ -83,7 +84,14 @@ namespace mtx{
 
 		return sqrt( vx*vx + vy*vy + vz*vz );
 	}
-	auto rotate(float angle, glm::vec4 axis) -> glm::mat4 {
+	auto norm(glm::vec3 v) -> float {
+		float vx = v.x;
+		float vy = v.y;
+		float vz = v.z;
+
+		return sqrt( vx*vx + vy*vy + vz*vz );
+	}
+	auto rotate_rodriguez(float angle, glm::vec4 axis) -> glm::mat4 {
 		float c = cos(angle);
 		float s = sin(angle);
 
@@ -171,7 +179,7 @@ namespace mtx{
 		float l = -r;
 
 		glm::mat4 P = matrix(
-			n  , 0.0f , 0.0f , 0.0f ,  // LINHA 1
+			n    , 0.0f , 0.0f , 0.0f ,  // LINHA 1
 			0.0f ,   n  , 0.0f , 0.0f ,  // LINHA 2
 			0.0f , 0.0f ,  n+f , -n*f ,  // LINHA 3
 			0.0f , 0.0f , 1.0f , 0.0f    // LINHA 4
@@ -179,5 +187,16 @@ namespace mtx{
 		glm::mat4 M = orthographic(l, r, b, t, n, f);
 
 		return -M*P;
+	}
+	auto print(glm::mat4 mtx) -> void {
+		for(int i = 0; i < 4; i++){
+			for(int j = 0; j < 4; j++){
+				if(j == 3)
+					std::cout << mtx[j][i];
+				else
+					std::cout << mtx[j][i] << ", ";
+			}
+			std::cout << std::endl;
+		}
 	}
 }

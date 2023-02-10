@@ -23,7 +23,13 @@
 #include "entities.hpp"
 #include "mesh.hpp"
 
+#define DBG 
+
+#ifdef DBG
 #define DRAWDBG(x) if(!x){std::cerr << "DRAW NOT ALLOCATED IN LINE: " << __LINE__ << std::endl; exit(1);}
+#else
+#define DRAWDBG(x) x;
+#endif
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
@@ -94,11 +100,11 @@ int main(int argc, char** argv)
 	}
 	std::unique_ptr<entity::Camera> camera (new entity::Camera(true));
 
-	std::unique_ptr<render::Mesh> teapot;
-	std::unique_ptr<render::Mesh> plane;
+	std::unique_ptr<render::ObjMesh> teapot;
+	std::unique_ptr<render::ObjMesh> plane;
 	try{
-		std::unique_ptr<render::Mesh> teapot_expt (new render::Mesh("models/teapot.obj", "models/materials"));
-		std::unique_ptr<render::Mesh> plane_expt (new render::Mesh("models/plane.obj", "models/materials"));
+		std::unique_ptr<render::ObjMesh> teapot_expt (new render::ObjMesh("models/teapot.obj", "models/materials"));
+		std::unique_ptr<render::ObjMesh> plane_expt (new render::ObjMesh("models/plane.obj", "models/materials"));
 		teapot = std::move(teapot_expt);
 		plane = std::move(plane_expt);
 	}catch(const std::exception& e){
@@ -109,6 +115,7 @@ int main(int argc, char** argv)
 	teapot->load_to_gpu();
 	plane->load_to_gpu();
 	auto tea_model = mtx::scale(0.5f,0.5f,0.5f) * mtx::translate(1.0f,1.0f,1.0f);
+	mtx::print(tea_model);
 	auto plane_model = mtx::indentity();
 
 	float phi = 0, theta = 0, distance = 2.5f;
