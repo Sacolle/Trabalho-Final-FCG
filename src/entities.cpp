@@ -107,11 +107,11 @@ namespace entity{
 	
 	auto Entity::draw() -> void {
 
-		gpu_program->set_uniform_bool("render_wire_frame", false);
-		
 		gpu_program->set_uniform_mtx("model_scale",get_scaling_ptr());
 		gpu_program->set_uniform_mtx("model_rotate",get_rotaion_ptr());
 		gpu_program->set_uniform_mtx("model_translate",get_translation_ptr());
+		
+		gpu_program->set_uniform_bool("render_wire_frame", false);
 		gpu_program->set_uniform_mtx("model_base_translate",get_base_translate_ptr());
 		
 		mesh->draw();		

@@ -5,10 +5,12 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include <cmath>
 
+#define CIRCLE_DEFINITION 16
+#define PI 3.141592f
 
 namespace render{
-
 	/*****************************
 		Mesh implementation
 	******************************/
@@ -101,7 +103,6 @@ namespace render{
 		WireMesh implementation
 	******************************/
 	WireMesh::WireMesh(int type){
-		
 		switch (type){
 		case 0:
 			verts = std::vector<GLfloat>{
@@ -122,9 +123,51 @@ namespace render{
 				5, 1, 5, 4, 5, 7
 			};
 			break;
+		//cilinder
+		//center = 0, 0, 0
+		//r = 1	(diameter = 2)
+		//height = 1 (total = 2)
 		case 1:
-			std::throw_with_nested(std::runtime_error("tipo de BBox Cylinder não implementado"));
+		{
+			const float segment = 2*PI/CIRCLE_DEFINITION;
+			//top verts
+			for(int i = 0; i < CIRCLE_DEFINITION; i++){
+				verts.push_back(cosf(segment*i)); //x
+				verts.push_back(+1.0f); //y
+				verts.push_back(sinf(segment*i)); //z
+			}
+			//bottom verts
+			for(int i = 0; i < CIRCLE_DEFINITION; i++){
+				verts.push_back(cosf(segment*i)); //x
+				verts.push_back(-1.0f); //y
+				verts.push_back(sinf(segment*i)); //z
+			}
+			//top indexes
+			for(int i = 0; i < CIRCLE_DEFINITION; i+=2){
+				//clock wise
+				indexs.push_back(i);
+				indexs.push_back(i + 1);
+				//counter clock wise
+				indexs.push_back(i);
+				indexs.push_back(i - 1 < 0 ? CIRCLE_DEFINITION - 1 : i - 1); //if 0 then loop around
+				//top
+				indexs.push_back(i);
+				indexs.push_back(i + CIRCLE_DEFINITION);
+			}
+			//bottom indexes
+			for(int i = CIRCLE_DEFINITION + 1; i < 2*CIRCLE_DEFINITION; i+=2){
+				//clock wise
+				indexs.push_back(i);
+				indexs.push_back(i + 1 == 2*CIRCLE_DEFINITION ? CIRCLE_DEFINITION : i + 1);
+				//counter clock wise
+				indexs.push_back(i);
+				indexs.push_back(i - 1); //if 0 then loop around
+				//top
+				indexs.push_back(i);
+				indexs.push_back(i - CIRCLE_DEFINITION);
+			}
 			break;
+		}
 		case 2:
 			std::throw_with_nested(std::runtime_error("tipo de BBox Sphere não implementado"));
 			break;

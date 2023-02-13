@@ -11,14 +11,11 @@
 #include "shader.hpp"
 
 namespace entity{
-	//TODO: move to namespace utils when adding the bbox checks
 	enum class BBoxType{
 		Rectangle,
 		Cylinder,
-		//EllipticalCylinder, //it's just a scaled cylinder
 		Sphere
 	};
-
 	class Geometry{
 		public:
 			Geometry(glm::vec4 cords, glm::vec4 direction,
@@ -43,6 +40,9 @@ namespace entity{
 			inline auto set_base_translate(float x, float y, float z) -> void {
 				base_translate = mtx::translate(x,y,z);
 			}
+			inline auto get_x_cords() -> float { return cords.x; }
+			inline auto get_y_cords() -> float { return cords.y; }
+			inline auto get_z_cords() -> float { return cords.z; }
 
 		protected:
 			inline auto get_scaling_ptr() -> float* {

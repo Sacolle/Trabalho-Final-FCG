@@ -30,7 +30,7 @@ bin/main: $(OBJS) $(STATIC_OBJS) ./lib/libglfw3.a
 $(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(wildcard ./include/*.hpp) SRC
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/entities.o : $(SRCDIR)/entities.cpp $(SRCDIR)/matrix.cpp $(SRCDIR)/shader.cpp $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp shader.hpp)
+$(OBJDIR)/entities.o : $(addprefix $(SRCDIR)/, entities.cpp matrix.cpp shader.cpp collision.cpp) $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp shader.hpp collision.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 $(OBJDIR)/matrix.o : $(SRCDIR)/matrix.cpp $(addprefix $(INCLUDEDIR)/,matrix.hpp)
@@ -40,6 +40,9 @@ $(OBJDIR)/shader.o : $(SRCDIR)/shader.cpp $(addprefix $(INCLUDEDIR)/,shader.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 $(OBJDIR)/mesh.o : $(SRCDIR)/mesh.cpp $(addprefix $(INCLUDEDIR)/,mesh.hpp)
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+$(OBJDIR)/collision.o : $(SRCDIR)/collision.cpp $(SRCDIR)/entities.cpp $(addprefix $(INCLUDEDIR)/,collision.hpp entities.hpp)
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 #builds the src files versão generica e unreliable

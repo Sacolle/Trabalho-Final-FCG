@@ -10,7 +10,6 @@
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
-#include <glm/gtc/type_ptr.hpp>
 
 //headers do IMGUI
 #include "imgui/imgui.h"
@@ -22,6 +21,8 @@
 #include "matrix.hpp"
 #include "entities.hpp"
 #include "mesh.hpp"
+#include "collision.hpp"
+
 
 #define PI 3.141592f
 
@@ -69,28 +70,32 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		std::exit(EXIT_FAILURE);
 	}
 
-	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(0));
+	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
+	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
 	std::shared_ptr<entity::Entity> plane(
 		new entity::Entity(
 			gpu_program, plane_mesh, nullptr,
 			glm::vec4(0,0,0,1), glm::vec4(0,1,0,0),
-			0, 0, 0, 4, 1, 4, 1, 1, 0, entity::BBoxType::Rectangle
+			0, 0, 0,
+			4, 1, 4,
+			1, 1, 0, entity::BBoxType::Rectangle
 		)
 	);
-
+  
 	std::shared_ptr<entity::Entity> teapot(
 		new entity::Entity(
-			gpu_program, teapot_mesh, cube_wire_mesh,
+			gpu_program, teapot_mesh, cylinder_wire_mesh,
 			glm::vec4(0,0,0,1), glm::vec4(1,0,0,0),
-			0, 0, 0, 0.5, 1, 0.5, 2, 2, 2, entity::BBoxType::Rectangle
+			0, 0, 0,
+			0.5, 1, 0.5,
+			2, 2, 1.25, entity::BBoxType::Cylinder
 		)
 	);
-
 	
-	float phi = 0.8f, theta = 0.0f, distance = 8.0f;
+	float phi = 0.0f, theta = 0.0f, distance = 8.0f;
 	float x = 0, y = 0, z = 0;
-	bool show_camera_movment = false;
+	bool show_camera_movment = true;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
