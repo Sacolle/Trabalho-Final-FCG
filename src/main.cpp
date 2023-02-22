@@ -51,7 +51,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	std::shared_ptr<render::GPUprogram> gpu_program;
 	try{
 		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(vertex_shader,fragment_shader));
-		gpu_program = std::move(gpu_program_expt);
+		gpu_program = gpu_program_expt;
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
@@ -60,11 +60,14 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 
 	std::shared_ptr<render::ObjMesh> teapot_mesh;
 	std::shared_ptr<render::ObjMesh> plane_mesh;
+	std::shared_ptr<render::ObjMesh> cube_mesh;
 	try{
 		std::shared_ptr<render::ObjMesh> teapot_expt (new render::ObjMesh("models/teapot.obj", "models/materials"));
 		std::shared_ptr<render::ObjMesh> plane_expt (new render::ObjMesh("models/plane.obj", "models/materials"));
-		teapot_mesh = std::move(teapot_expt);
-		plane_mesh = std::move(plane_expt);
+		std::shared_ptr<render::ObjMesh> cube_expt (new render::ObjMesh("models/cube.obj", "models/materials"));
+		teapot_mesh = teapot_expt;
+		plane_mesh = plane_expt;
+		cube_mesh = cube_expt;
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
@@ -76,25 +79,38 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	std::shared_ptr<entity::Entity> plane(
 		new entity::Entity(
 			gpu_program, plane_mesh, nullptr,
-			glm::vec4(0,0,0,1), glm::vec4(0,1,0,0),
+			glm::vec4(0,0,0,1), glm::vec4(0,1,0,0), 0.01f,
 			0, 0, 0,
 			4, 1, 4,
 			1, 1, 0, entity::BBoxType::Rectangle
 		)
 	);
   
-	std::shared_ptr<entity::Entity> teapot(
+	std::shared_ptr<entity::Entity> player(
 		new entity::Entity(
 			gpu_program, teapot_mesh, cylinder_wire_mesh,
-			glm::vec4(0,0,0,1), glm::vec4(1,0,0,0),
+			glm::vec4(4,0,4,1), glm::vec4(1,0,0,0), 0.05f,
 			0, 0, 0,
-			0.5, 1, 0.5,
+			1, 1, 1,
 			2, 2, 1.25, entity::BBoxType::Cylinder
 		)
 	);
+	std::shared_ptr<entity::Entity> cube(
+		new entity::Entity(
+			gpu_program, cube_mesh, cube_wire_mesh,
+			glm::vec4(0.01,0,0.01,1), glm::vec4(1,0,0,0), 0.01f,
+			0, 0, 0,
+			1, 1, 1,
+			1, 1, 1, entity::BBoxType::Rectangle
+		)
+	);
+
+	utils::CollisionMap collision_map(100,100,2,2);
+	collision_map.insert_mover(player);
+	collision_map.insert_mover(cube);
 	
 	float phi = 0.0f, theta = 0.0f, distance = 8.0f;
-	float x = 0, y = 0, z = 0;
+	float x = 0, y = -1.25, z = 0;
 	bool show_camera_movment = true;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -120,7 +136,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
             ImGui::Text("Move the camera");               // Display some text (you can use a format strings too)
             ImGui::SliderFloat("phi", &phi, 0.0f, 3.14f);
             ImGui::SliderFloat("theta", &theta, 0.0f, 3.14f);
-            ImGui::SliderFloat("distance", &distance, 2.5f, 10.0f);
+            ImGui::SliderFloat("distance", &distance, 2.5f, 20.0f);
 
 			ImGui::End();
 		}
@@ -139,14 +155,23 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 
 		const float angle = player_movement();
 		if(angle != -1){
-			teapot->set_y_angle(angle);
-			teapot->translate_foward(0.01f);
+			player->set_y_angle(angle);
+			collision_map.remove_mover(player);
+			if(!collision_map.colide_foward(player)){
+				player->translate_foward();
+			}
+			collision_map.insert_mover(player);
 		}
+
+
 		//correction translation to set the origin at the center of the model
-		teapot->set_base_translate(x,y,z);
+		player->set_base_translate(x,y,z);
 		
-		teapot->draw();
-		teapot->draw_wire();
+		player->draw();
+		player->draw_wire();
+
+		cube->draw();
+		cube->draw_wire();
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);

@@ -2,22 +2,26 @@
 #include <exception>
 #include <stdexcept>
 #include <iostream>
+#include <utility>
 
 #include "entities.hpp"
 
 #define SIGMA 0.0001f
 
 namespace entity{
+	inline bool value_in_range(int value, int min, int max){
+		return (value >= min) && (value <= max);
+	}
 	/*****************************
 		Geometry implementation
 	******************************/
 	Geometry::Geometry(
-		glm::vec4 cords, glm::vec4 direction,
+		glm::vec4 cords, glm::vec4 direction, float speed,
 		float x_angle, float y_angle, float z_angle,
 		float x_scale, float y_scale, float z_scale,
 		float x_radius, float z_radius, float height, BBoxType bbox_type
 		):
-	cords(cords), direction(direction),
+	cords(cords), direction(direction), speed(speed),
 	x_angle(x_angle), y_angle(y_angle), z_angle(z_angle),
 	x_scale(x_scale), y_scale(y_scale), z_scale(z_scale),
 	x_radius(x_radius), z_radius(z_radius), height(height), bbox_type(bbox_type) {
@@ -28,7 +32,8 @@ namespace entity{
 	}
 	//simpler constructor with default values
 	Geometry::Geometry(glm::vec4 cords):
-	cords(cords), direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)), base_direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)),
+	cords(cords), direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)), speed(0.01f),
+	base_direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)),
 	x_angle(0), y_angle(0), z_angle(0),
 	x_scale(1), y_scale(1), z_scale(1),
 	x_radius(1), z_radius(1), height(1), bbox_type(BBoxType::Rectangle) {
@@ -36,16 +41,15 @@ namespace entity{
 		set_translation();
 		set_scaling();
 	}
-
 	Geometry::~Geometry(){
 
 	}
 	//normalize the vectors
-	auto Geometry::translate_foward(float speed) -> void{
+	auto Geometry::translate_foward() -> void{
 		cords += direction * speed;
 		set_translation();
 	}
-	auto Geometry::translate_direction(glm::vec4 direction, float speed) -> void{
+	auto Geometry::translate_direction(glm::vec4 direction) -> void{
 		glm::vec4 normalized_direction = direction / mtx::norm(direction);
 		cords += normalized_direction * speed;
 		set_translation();
@@ -75,11 +79,160 @@ namespace entity{
 		set_rotation();
 		direction = rotation * base_direction;
 	}
-	/*
-	//TODO: implementar com shared_ptr
-	auto Geometry::in_2d_bounds(Geometry &geometry) -> bool{
-		return false;
+
+	auto Geometry::box_to_box_collision(std::shared_ptr<Geometry> geometry) const -> bool{
+		const auto future_pos = cords + (direction * speed);
+
+		const auto geo_cords = geometry->get_cords();
+		const float box_x = geometry->get_x_radius();
+		const float box_z = geometry->get_z_radius();
+
+		//solution taken from stackoverflow https://stackoverflow.com/a/62852710
+		return std::max(geo_cords.x - box_x, future_pos.x - x_radius) < std::min(geo_cords.x + box_x, future_pos.x + x_radius) &&
+		std::max(geo_cords.z - box_z, future_pos.z - z_radius) < std::min(geo_cords.z + box_z, future_pos.z + z_radius);
 	}
+	auto Geometry::cilinder_to_box_collision(std::shared_ptr<Geometry> geometry) const -> bool{
+		const auto future_pos = cords + (direction * speed);
+		//std::cout << "Center: " << future_pos.x << " " << future_pos.z << std::endl;
+		
+		const auto center2geometry = geometry->get_cords() - future_pos;
+
+		const float co = abs(center2geometry.x);
+		const float ca = abs(center2geometry.z);
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius*cosf(ca/hipotenuse);
+		const float rz = z_radius*sinf(co/hipotenuse);
+
+		//std::cout << "cos(" << ca << "/" << hipotenuse << ") = " << cosf(ca/hipotenuse) << std::endl;
+		//std::cout << "rx: " << rx << " = " << x_radius << "*" << cosf(ca/hipotenuse) << std::endl;
+
+		auto boundry_point = future_pos;
+		boundry_point[3] = 1;
+		if(center2geometry.x > 0){
+			boundry_point[0] += rx;
+		}else{
+			boundry_point[0] -= rx;
+		}
+		if(center2geometry.z > 0){
+			boundry_point[2] += rz;
+		}else{
+			boundry_point[2] -= rz;
+		}
+		//std::cout << "Boundry Point: " << boundry_point.x << " " << boundry_point.z << std::endl;
+
+		const auto geo_cords = geometry->get_cords();
+		const float box_x = geometry->get_x_radius();
+		const float box_z = geometry->get_z_radius();
+
+		bool x_overlap = value_in_range(boundry_point.x, geo_cords.x - box_x, geo_cords.x + box_x);
+		bool z_overlap = value_in_range(boundry_point.z, geo_cords.z - box_z, geo_cords.z + box_z);
+		return x_overlap && z_overlap;
+	}
+	auto Geometry::box_to_cilinder_collision(std::shared_ptr<Geometry> geometry) const -> bool{
+		const auto future_pos = cords + (direction * speed);
+		const auto geometry2center = future_pos - geometry->get_cords();
+
+		const float co = abs(geometry2center.x);
+		const float ca = abs(geometry2center.z);
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius*cosf(ca/hipotenuse);
+		const float rz = z_radius*sinf(co/hipotenuse);
+
+		auto boundry_point = geometry2center;
+		boundry_point[3] = 1;
+		if(geometry2center.x > 0){
+			boundry_point[0] += rx;
+		}else{
+			boundry_point[0] -= rx;
+		}
+		if(geometry2center.z > 0){
+			boundry_point[2] += rz;
+		}else{
+			boundry_point[2] -= rz;
+		}
+		bool x_overlap = value_in_range(boundry_point.x, future_pos.x - x_radius, future_pos.x + x_radius);
+		bool z_overlap = value_in_range(boundry_point.z, future_pos.z - z_radius, future_pos.z + z_radius);
+		return x_overlap && z_overlap;
+	}
+	auto Geometry::cilinder_to_cilinder_collision(std::shared_ptr<Geometry> geometry) const -> bool{
+		const auto future_pos = cords + (direction * speed);
+
+		const auto center2geometry = geometry->get_cords() - future_pos;
+
+		const float co = abs(center2geometry.x);
+		const float ca = abs(center2geometry.z);
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius*cosf(ca/hipotenuse);
+		const float rz = z_radius*sinf(co/hipotenuse);
+
+		auto boundry_point = center2geometry;
+		boundry_point[3] = 1;
+		if(center2geometry.x > 0){
+			boundry_point[0] += rx;
+		}else{
+			boundry_point[0] -= rx;
+		}
+		if(center2geometry.z > 0){
+			boundry_point[2] += rz;
+		}else{
+			boundry_point[2] -= rz;
+		}
+
+		const auto geometry2center = future_pos - geometry->get_cords();
+		
+		const float geo_rx = geometry->get_x_radius()*cosf(ca/hipotenuse);
+		const float geo_rz = geometry->get_z_radius()*sinf(co/hipotenuse);
+
+		bool right_x = geometry2center.x > 0;
+		bool right_z = geometry2center.z > 0;
+
+		//FIXME: acho q se geometry2center for 0 vai dar merda	
+		return (right_x && (geometry2center.x + geo_rx > boundry_point.x)) ||
+			(!right_x && (geometry2center.x - geo_rx < boundry_point.x));
+
+		/*
+		if(geometry2center.x > 0){
+			if(geometry2center.x + geo_rx > boundry_point.x){
+				return true;
+			}
+		}else{
+			if(geometry2center.x - geo_rx < boundry_point.x){
+				return true;
+			}
+		}
+		if(geometry2center.z > 0){
+			if(geometry2center.z + geo_rz > boundry_point.z){
+				return true;
+			}
+		}else{
+			if(geometry2center.z - geo_rz < boundry_point.z){
+				return true;
+			}
+		}*/
+	}
+
+	//TODO: change ocurrencers of cords to future_pos
+	auto Geometry::foward_will_collide(std::shared_ptr<Geometry> geometry) -> bool {
+		//std::cout << "collide test" << std::endl;
+		auto future_pos = cords + (direction * speed);
+		if(bbox_type == BBoxType::Rectangle){
+			if(geometry->get_bbox_type() == BBoxType::Rectangle){
+				return box_to_box_collision(geometry);
+			}else{
+				return box_to_cilinder_collision(geometry);
+			}
+		}else{ 
+			if(geometry->get_bbox_type() == BBoxType::Rectangle){
+				return cilinder_to_box_collision(geometry);
+			}else{
+				return cilinder_to_cilinder_collision(geometry);
+			}
+		}
+	}
+	/*
 	auto Geometry::in_3d_bounds(Geometry &geometry) -> bool{
 		return false;
 	}*/
@@ -89,11 +242,11 @@ namespace entity{
 	Entity::Entity(std::shared_ptr<render::GPUprogram> gpu_program,
 		std::shared_ptr<render::ObjMesh> mesh,
 		std::shared_ptr<render::WireMesh> wire_mesh,
-		glm::vec4 cords, glm::vec4 direction,
+		glm::vec4 cords, glm::vec4 direction, float speed,
 		float x_angle, float y_angle, float z_angle,
 		float x_scale, float y_scale, float z_scale,
 		float x_radius, float z_radius, float height, BBoxType bbox_type):
-		Geometry( cords, direction,
+		Geometry( cords, direction, speed,
 				x_angle, y_angle, z_angle,
 				x_scale, y_scale, z_scale,
 				x_radius,z_radius, height, bbox_type),
@@ -143,7 +296,7 @@ namespace entity{
 		view = mtx::cam_view(point_c,view_vec,up_vec);
 
 		if(is_perspective){
-			projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -0.1f,-10.0f);
+			projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -0.1f,-20.0f);
 		}else{
 			std::throw_with_nested(std::invalid_argument("Não implementei para ortográfico, LOL"));
 		}
