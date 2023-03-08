@@ -61,4 +61,4 @@ $(OBJDIR)/glad.o: $(LIBSDIR)/glad.c
 clean:
 	rm -f src/obj/*.o
 run: ./bin/main
-	./bin/main src/shaders/shader_vertex_tst.glsl src/shaders/shader_fragment.glsl
+	./bin/main src/shaders/model_vertex.glsl src/shaders/model_fragment.glsl

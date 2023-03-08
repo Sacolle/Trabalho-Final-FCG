@@ -19,51 +19,6 @@ namespace utils{
 		}
 		return out;
 	}
-	/*
-	//TODO: get_cell can return a nullprt
-	auto SpacialHash::get_quadrant(std::pair<int,int> key, int mask) -> NeighborIter  {
-		std::vector<std::forward_list<Entt>*> out;
-		for(int i = -1; i < 2; i++){
-			for(int j = -1; j < 2; j++){
-				int cell_bit = 1 << ((3*(i + 1) + j + 1));
-				if(mask & cell_bit == cell_bit){
-					auto local = std::make_pair(key.first + i, key.second + j);
-					out.push_back(get_cell(local));
-				}
-			}
-		}
-		return NeighborIter(std::move(out));
-	}*/
-	/*
-	//get_neighbors
-	NeighborIter::NeighborIter(std::vector<std::forward_list<std::shared_ptr<entity::Entity>>*> l): lists(l){
-		auto ref = lists.back();
-		curr = ref->begin();
-		end  = ref->end();
-	}
-	//acess the last list on the vector
-	//iterate overt it one step, returning the value
-	//when the list is empty, pop it from the vec
-	//repete until list is empty 
-	auto NeighborIter::next(std::shared_ptr<entity::Entity> *val) -> bool{
-		//invalidades new calls for the iterator
-		//can be removed for performance, but then when an empty iter calls next, then it goes bad
-		if(lists.empty()){
-			return false;
-		}
-		if(curr == end){
-			lists.pop_back();
-			if(lists.empty()){
-				return false;
-			}
-			auto next_list = lists.back();
-			curr = next_list->begin();
-			end  = next_list->end();
-		}
-		*val = *curr;
-		curr++;
-		return true;
-	}*/
 
 	CollisionMap::CollisionMap(float max_width, float max_depth, float mover_cell_grain, float obj_cell_grain):
 	max_width(max_width),max_depth(max_depth),mover_cell_grain(mover_cell_grain),obj_cell_grain(obj_cell_grain),
@@ -89,39 +44,126 @@ namespace utils{
 		auto key = mover_map.make_key(entity);
 		return mover_map.remove(key,entity);
 	}
-	auto CollisionMap::colide_foward(Entt entity) -> bool {
-		//check collision with enemies
-		//int i = 0;
-		//std::cout << "amount of neighbors: " << mover_neighbors.size() << std::endl;
+	auto CollisionMap::box_to_box_collision(Entt target, Entt geometry, const glm::vec4 future_pos) const -> bool{
+
+		const auto geo_cords = geometry->get_cords();
+		const float box_x = geometry->get_x_radius();
+		const float box_z = geometry->get_z_radius();
+
+		const float x_radius = target->get_x_radius();
+		const float z_radius = target->get_z_radius();
+
+		//solution taken from stackoverflow https://stackoverflow.com/a/62852710
+		return std::max(geo_cords.x - box_x, future_pos.x - x_radius) < std::min(geo_cords.x + box_x, future_pos.x + x_radius) &&
+		std::max(geo_cords.z - box_z, future_pos.z - z_radius) < std::min(geo_cords.z + box_z, future_pos.z + z_radius);
+	}
+	auto CollisionMap::cilinder_to_box_collision(Entt target, Entt geometry, const glm::vec4 future_pos) const -> bool{
+		const auto center2geometry = geometry->get_cords() - future_pos;
+
+		const float x_radius = target->get_x_radius();
+		const float z_radius = target->get_z_radius();
+		
+		const float co = center2geometry.z;
+		const float ca = center2geometry.x;
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius * (ca / hipotenuse);
+		const float rz = z_radius * (co / hipotenuse);
+
+		const glm::vec4 boundry_point(future_pos.x + rx, future_pos.y, future_pos.z + rz, 1);
+
+		//std::cout << "cos(" << ca << "/" << hipotenuse << ") = " << cosf(ca/hipotenuse) << std::endl;
+		//std::cout << "rx: " << rx << " = " << x_radius << "*" << cosf(ca/hipotenuse) << std::endl;
+		//std::cout << "Boundry Point: " << boundry_point.x << " " << boundry_point.z << std::endl;
+
+		const auto geo_cords = geometry->get_cords();
+		const float box_x = geometry->get_x_radius();
+		const float box_z = geometry->get_z_radius();
+
+		return std::max(geo_cords.x - box_x, boundry_point.x) == std::min(geo_cords.x + box_x, boundry_point.x) &&
+			   std::max(geo_cords.z - box_z, boundry_point.z) == std::min(geo_cords.z + box_z, boundry_point.z);
+	}
+	auto CollisionMap::box_to_cilinder_collision(Entt target, Entt geometry, const glm::vec4 future_pos) const -> bool{
+		const float x_radius = target->get_x_radius();
+		const float z_radius = target->get_z_radius();
+		
+		const auto geo_cords = geometry->get_cords();
+		const auto geometry2center = future_pos - geo_cords;
+
+		const float ca = geometry2center.x;
+		const float co = geometry2center.z;
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius * (ca / hipotenuse);
+		const float rz = z_radius * (co / hipotenuse);
+
+		const glm::vec4 geo_boundry_point(geo_cords.x + rx, geo_cords.y, geo_cords.z + rz, 1);
+
+		return std::max(future_pos.x - x_radius, geo_boundry_point.x) == std::min(future_pos.x + x_radius, geo_boundry_point.x) &&
+			   std::max(future_pos.z - z_radius, geo_boundry_point.z) == std::min(future_pos.z + z_radius, geo_boundry_point.z);
+	}
+	auto CollisionMap::cilinder_to_cilinder_collision(Entt target, Entt geometry, const glm::vec4 future_pos) const -> bool{
+		const float x_radius = target->get_x_radius();
+		const float z_radius = target->get_z_radius();
+		
+		const auto center2geometry = geometry->get_cords() - future_pos;
+		
+		const float co = center2geometry.z;
+		const float ca = center2geometry.x;
+		const float hipotenuse = sqrtf(co*co + ca*ca);
+		
+		const float rx = x_radius * (ca / hipotenuse);
+		const float rz = z_radius * (co / hipotenuse);
+
+		const glm::vec4 boundry_point(future_pos.x + rx, future_pos.y, future_pos.z + rz, 1);
+
+		const auto point2geometry = geometry->get_cords() - boundry_point;
+		const auto magnitude = sqrtf(point2geometry.x*point2geometry.x + point2geometry.z*point2geometry.z);
+
+		return magnitude <= geometry->get_x_radius();
+	}
+
+	auto CollisionMap::direction_will_collide(Entt target, Entt geometry, const glm::vec4 &dir) -> Entt {
+		const auto future_pos = target->get_cords() + (dir * target->get_speed());
+
+		if(target->get_bbox_type() == entity::BBoxType::Rectangle){
+			if(geometry->get_bbox_type() == entity::BBoxType::Rectangle){
+				return box_to_box_collision(target, geometry, future_pos) ? geometry : nullptr;
+			}else{
+				return box_to_cilinder_collision(target, geometry, future_pos) ? geometry : nullptr;
+			}
+		}else{ 
+			if(geometry->get_bbox_type() == entity::BBoxType::Rectangle){
+				return cilinder_to_box_collision(target, geometry, future_pos) ? geometry : nullptr;
+			}else{
+				return cilinder_to_cilinder_collision(target, geometry, future_pos) ? geometry : nullptr;
+			}
+		}
+	}
+	auto CollisionMap::colide_direction(Entt entity, const glm::vec4 direction) -> std::shared_ptr<entity::Entity> {
 		auto entity_map_key = mover_map.make_key(entity);
 		auto mover_neighbors = mover_map.get_quadrant(entity_map_key);
 		for(auto prox: mover_neighbors){
-			//std::cout << "i'm " << i++ << std::endl;
 			for(auto it = prox->begin(); it != prox->end();++it){
-				if(entity->foward_will_collide(*it)){
-					return true;
+				auto collision_target = direction_will_collide(entity, *it, direction);
+				if(collision_target != nullptr){
+					return collision_target;
 				}
 			}
 		}
-		/*
 		auto obj_map_key = obj_map.make_key(entity);
 		auto obj_neighbors = obj_map.get_quadrant(obj_map_key);
 		for(auto prox: obj_neighbors){
-			if(prox == nullptr){
-				continue;
-			}
 			for(auto it = prox->begin(); it != prox->end();++it){
-				if(entity->foward_will_collide(*it)){
-					return true;
+				auto collision_target = direction_will_collide(entity, *it, direction);
+				if(collision_target != nullptr){
+					return collision_target;
 				}
 			}
-		}*/
-		return false;
+		}
+		return nullptr;
 	}
 	/*
-	auto CollisionMap::colide_direction(Entt entity, glm::vec4 direction) -> bool {
-
-	}
 	auto CollisionMap::make_path(Entt entity, Entt player) -> Path {
 
 	}*/

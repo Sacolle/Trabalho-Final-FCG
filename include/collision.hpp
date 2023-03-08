@@ -40,18 +40,6 @@ namespace utils{
 
 	//for x y cords
 	using Entt = std::shared_ptr<entity::Entity>;
-	/*
-	class NeighborIter{
-		public:
-			NeighborIter(std::vector<std::forward_list<Entt>*> l);
-
-			auto next(Entt *val) -> bool;
-		private:
-			std::vector<std::forward_list<Entt>*> lists;
-			std::forward_list<Entt> :: iterator curr;
-			std::forward_list<Entt> :: iterator end;
-	}; */
-
 	class SpacialHash {
 		public:
 			SpacialHash(float cell_x, float cell_y);
@@ -109,16 +97,21 @@ namespace utils{
 			auto insert_mover(Entt entity) -> int;
 			auto remove_mover(Entt entity) -> int;
 
-			auto colide_foward(Entt entity) -> bool;
-			auto colide_direction(Entt entity, glm::vec4 direction) -> bool;
+			//auto colide_foward(Entt entity) -> bool;
+			auto colide_direction(Entt entity, const glm::vec4 direction) -> Entt;
 
 			auto make_path(Entt entity, Entt player) -> Path;
 		private:
+			auto direction_will_collide(Entt target ,Entt geometry, const glm::vec4 &dir) -> Entt;
+			auto box_to_box_collision(Entt target ,Entt geometry, const glm::vec4 future_pos) const -> bool;
+			auto cilinder_to_box_collision(Entt target ,Entt geometry, const glm::vec4 future_pos) const -> bool;
+			auto box_to_cilinder_collision(Entt target ,Entt geometry, const glm::vec4 future_pos) const -> bool;
+			auto cilinder_to_cilinder_collision(Entt target ,Entt geometry, const glm::vec4 future_pos) const -> bool;
+			
 			const float max_width, max_depth;
 			const float mover_cell_grain, obj_cell_grain;
 
 			SpacialHash obj_map;
 			SpacialHash mover_map;
 	};
-
 }

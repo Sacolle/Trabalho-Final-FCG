@@ -49,25 +49,32 @@ PressedKeys g_keys{false, false, false, false};
 void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
 	//carrega os shaders
 	std::shared_ptr<render::GPUprogram> gpu_program;
+	std::shared_ptr<render::GPUprogram> wire_renderer;
 	try{
 		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(vertex_shader,fragment_shader));
+		std::shared_ptr<render::GPUprogram> wire_renderer_expt (new render::GPUprogram("src/shaders/wire_vertex.glsl","src/shaders/wire_fragment.glsl"));
 		gpu_program = gpu_program_expt;
+		wire_renderer = wire_renderer_expt;
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
-	std::unique_ptr<entity::Camera> camera (new entity::Camera(true));
+	std::unique_ptr<entity::Camera> camera (new entity::Camera());
 
-	std::shared_ptr<render::ObjMesh> teapot_mesh;
-	std::shared_ptr<render::ObjMesh> plane_mesh;
-	std::shared_ptr<render::ObjMesh> cube_mesh;
+	//render::ParsedObjMesh teapot_load_mesh;
+	render::ParsedObjMesh cube_load_mesh;
+	render::ParsedObjMesh pawn_load_mesh;
+
+	//std::shared_ptr<render::Mesh> teapot_mesh;
+	std::shared_ptr<render::Mesh> cube_mesh;
+	std::shared_ptr<render::Mesh> pawn_mesh;
 	try{
-		std::shared_ptr<render::ObjMesh> teapot_expt (new render::ObjMesh("models/teapot.obj", "models/materials"));
-		std::shared_ptr<render::ObjMesh> plane_expt (new render::ObjMesh("models/plane.obj", "models/materials"));
-		std::shared_ptr<render::ObjMesh> cube_expt (new render::ObjMesh("models/cube.obj", "models/materials"));
-		teapot_mesh = teapot_expt;
-		plane_mesh = plane_expt;
-		cube_mesh = cube_expt;
+		//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
+		cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
+		pawn_load_mesh.load_obj_file("models/pawn.obj", "models/materials");
+		//teapot_mesh = teapot_load_mesh.load_to_gpu();
+		cube_mesh = cube_load_mesh.load_to_gpu();
+		pawn_mesh = pawn_load_mesh.load_to_gpu();
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
@@ -76,47 +83,53 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-	std::shared_ptr<entity::Entity> plane(
-		new entity::Entity(
-			gpu_program, plane_mesh, nullptr,
-			glm::vec4(0,0,0,1), glm::vec4(0,1,0,0), 0.01f,
-			0, 0, 0,
-			4, 1, 4,
-			1, 1, 0, entity::BBoxType::Rectangle
-		)
-	);
-  
+/*
 	std::shared_ptr<entity::Entity> player(
 		new entity::Entity(
 			gpu_program, teapot_mesh, cylinder_wire_mesh,
 			glm::vec4(4,0,4,1), glm::vec4(1,0,0,0), 0.05f,
 			0, 0, 0,
-			1, 1, 1,
+			2, 1, 1,
 			2, 2, 1.25, entity::BBoxType::Cylinder
 		)
 	);
+
+*/
 	std::shared_ptr<entity::Entity> cube(
 		new entity::Entity(
-			gpu_program, cube_mesh, cube_wire_mesh,
+			gpu_program, wire_renderer, cube_mesh, cube_wire_mesh,
 			glm::vec4(0.01,0,0.01,1), glm::vec4(1,0,0,0), 0.01f,
 			0, 0, 0,
 			1, 1, 1,
 			1, 1, 1, entity::BBoxType::Rectangle
 		)
 	);
-
+	std::shared_ptr<entity::Entity> pawn(
+		new entity::Entity(
+			gpu_program, wire_renderer, pawn_mesh, cylinder_wire_mesh,
+			glm::vec4(-3,0,0.01,1), glm::vec4(1,0,0,0), 0.01f,
+			0, 0, 0,
+			1, 1, 1,
+			1.5f, 1.5f, 1, entity::BBoxType::Cylinder
+		)
+	);
+	/*
 	utils::CollisionMap collision_map(100,100,2,2);
 	collision_map.insert_mover(player);
 	collision_map.insert_mover(cube);
-	
+	*/
 	float phi = 0.0f, theta = 0.0f, distance = 8.0f;
 	float x = 0, y = -1.25, z = 0;
 	bool show_camera_movment = true;
+	float last_frame = (float)glfwGetTime();
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
 		glfwPollEvents();
-  
+		float now = (float)glfwGetTime();
+		float delta_time = now - last_frame;
+		last_frame = now;
+
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -147,31 +160,55 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		//set GPU and camera projections
-		gpu_program->use_prog();
 		camera->update_position(phi,theta,distance);
 		camera->update_aspect_ratio(g_ScreenRatio);
-		gpu_program->set_uniform_mtx("view",camera->get_view_ptr());
-		gpu_program->set_uniform_mtx("projection",camera->get_projection_ptr());
+		gpu_program->use_prog();
+		gpu_program->set_mtx("view",camera->get_view_ptr());
+		gpu_program->set_mtx("projection",camera->get_projection_ptr());
 
+		//If it colides with an object, it pushes the entity a little in the oposite direction
+		/*
 		const float angle = player_movement();
 		if(angle != -1){
 			player->set_y_angle(angle);
 			collision_map.remove_mover(player);
-			if(!collision_map.colide_foward(player)){
-				player->translate_foward();
+
+			const auto player_dx = player->get_parcial_direction_x();
+			const auto collided_with_dx = collision_map.colide_direction(player,player_dx);
+			if(collided_with_dx == nullptr){
+				player->translate_direction(player_dx);
+			}else{
+				const auto collision_normal = player->get_cords() - collided_with_dx->get_cords();
+				player->translate_direction(collision_normal/mtx::norm(collision_normal));
 			}
+			const auto player_dz = player->get_parcial_direction_z();
+			const auto collided_with_dz = collision_map.colide_direction(player,player_dz);
+			if(collided_with_dz == nullptr){
+				player->translate_direction(player_dz);
+			}else{
+				const auto collision_normal = player->get_cords() - collided_with_dz->get_cords();
+				player->translate_direction(collision_normal/mtx::norm(collision_normal));
+			}
+
 			collision_map.insert_mover(player);
-		}
-
-
+		}*/
 		//correction translation to set the origin at the center of the model
-		player->set_base_translate(x,y,z);
-		
+		//player->set_base_translate(x,y,z);
+		  
+		  /*
 		player->draw();
 		player->draw_wire();
 
+*/
 		cube->draw();
+		pawn->draw();
+
+		wire_renderer->use_prog();
+		wire_renderer->set_mtx("view",camera->get_view_ptr());
+		wire_renderer->set_mtx("projection",camera->get_projection_ptr());
+
 		cube->draw_wire();
+		pawn->draw_wire();
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
@@ -239,7 +276,13 @@ int main(int argc, char** argv)
     glfwSetKeyCallback(window, KeyCallback); //keypress
 
 	glfwMakeContextCurrent(window); //faz com q as chamadas do OpenGL façam render na janela
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress); //load das funcões da Glad
+	//load das funcões da Glad
+    if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)){
+        glfwTerminate();
+       	std::cerr << "ERROR: gladLoadGLLoader() failed.\n" << std::endl;
+        std::exit(EXIT_FAILURE);
+
+	}
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

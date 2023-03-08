@@ -108,26 +108,24 @@ namespace render{
 		glDeleteProgram(id);
 	}
 
-	auto GPUprogram::set_uniform_mtx(const char* atrib, const GLfloat *value) -> void{
-		GLint model_uniform;
-		//checa se o atrib existe no mapa
-		if(uniforms.count(atrib)){
-			model_uniform = uniforms[atrib];
-		}else{
-			model_uniform = glGetUniformLocation(id, atrib);
-			uniforms[atrib] = model_uniform;
-		}
+	auto GPUprogram::set_mtx(const char* atrib, const GLfloat *value) -> void{
+		GLint model_uniform = get_position(atrib);
 		glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , value);
 	}
-	auto GPUprogram::set_uniform_bool(const char* atrib, const bool value) -> void{
-		GLint model_uniform;
-		//checa se o atrib existe no mapa
-		if(uniforms.count(atrib)){
-			model_uniform = uniforms[atrib];
-		}else{
-			model_uniform = glGetUniformLocation(id, atrib);
-			uniforms[atrib] = model_uniform;
-		}
+	auto GPUprogram::set_vec3(const char* atrib, const GLfloat *value) -> void{
+		GLint model_uniform = get_position(atrib);
+		glUniform3fv(model_uniform, 3, value);
+	}
+	auto GPUprogram::set_float(const char* atrib, const GLfloat value) -> void{
+		GLint model_uniform = get_position(atrib);
+		glUniform1f(model_uniform, value);
+	}
+	auto GPUprogram::set_int(const char* atrib, const GLint value) -> void{
+		GLint model_uniform = get_position(atrib);
+		glUniform1i(model_uniform, value);
+	}
+	auto GPUprogram::set_bool(const char* atrib, const bool value) -> void{
+		GLint model_uniform = get_position(atrib);
 		glUniform1i(model_uniform, value);
 	}
  	auto GPUprogram::use_prog() -> void {
