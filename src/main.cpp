@@ -28,6 +28,7 @@
 
 void print_exception(const std::exception& e, int level);
 auto player_movement() -> float;
+auto camera_movement() -> Direction;
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
@@ -40,6 +41,7 @@ float g_ScreenRatio = 1.0f;
 float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
+bool freeCam = false;
 
 typedef struct {
 	bool w, a, s, d;
@@ -148,21 +150,28 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 
 		//set GPU and camera projections
 		gpu_program->use_prog();
-		camera->update_position(phi,theta,distance);
+
+		if(!freeCam){
+			camera->update_position(phi,theta,distance);
+
+			const float angle = player_movement();
+			if(angle != -1){
+				player->set_y_angle(angle);
+				collision_map.remove_mover(player);
+				if(!collision_map.colide_foward(player)){
+					player->translate_foward();
+				}
+				collision_map.insert_mover(player);
+			}
+		}
+		else{
+			Direction dir = camera_movement();
+			camera->update_position(dir);
+		}
+		
 		camera->update_aspect_ratio(g_ScreenRatio);
 		gpu_program->set_uniform_mtx("view",camera->get_view_ptr());
 		gpu_program->set_uniform_mtx("projection",camera->get_projection_ptr());
-
-		const float angle = player_movement();
-		if(angle != -1){
-			player->set_y_angle(angle);
-			collision_map.remove_mover(player);
-			if(!collision_map.colide_foward(player)){
-				player->translate_foward();
-			}
-			collision_map.insert_mover(player);
-		}
-
 
 		//correction translation to set the origin at the center of the model
 		player->set_base_translate(x,y,z);
@@ -207,6 +216,21 @@ auto player_movement() -> float{
 	}
 	if(components == 0) return -1;
 	return angle/components;
+}
+auto camera_movement() -> Direction{
+	if(g_keys.w){
+		return Front;
+	}
+	if(g_keys.a){
+		return Left;
+	}
+	if(g_keys.s){
+		return Back;
+	}
+	if(g_keys.d){
+		return Right;
+	}
+	return Stay;
 }
 int main(int argc, char** argv)
 {
@@ -328,6 +352,9 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	}
 	if(key == GLFW_KEY_A && action == GLFW_RELEASE){
 		g_keys.a = false;
+	}
+	if(key == GLFW_KEY_P && action == GLFW_PRESS){
+		freeCam = !freeCam;
 	}
     // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;

@@ -11,6 +11,14 @@
 #include "matrix.hpp"
 #include "shader.hpp"
 
+enum Direction{
+	Front,
+	Back,
+	Right,
+	Left,
+	Stay
+};
+
 namespace entity{
 	enum class BBoxType{
 		Rectangle,
@@ -150,12 +158,14 @@ namespace entity{
 			Camera(bool is_perspective);
 			auto update_aspect_ratio(float aspect_ratio) -> void;
 			auto update_position(float phi, float theta, float radius) -> void;
+			auto update_position(Direction dir) -> void;
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }
 		private:
 			glm::vec4 point_c;
 			glm::vec4 up_vec;
 			glm::vec4 point_look_at;
+			glm::vec4 view_vec;
 			float aspect_ratio;
 
 			glm::mat4 projection;

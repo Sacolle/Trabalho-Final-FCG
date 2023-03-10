@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "entities.hpp"
+#include "matrix.hpp"
 
 #define SIGMA 0.0001f
 
@@ -290,6 +291,7 @@ namespace entity{
 		point_c = glm::vec4(0.0f,0.0f,1.0f,1.0f);
 		point_look_at = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 		up_vec = glm::vec4(0.0f,1.0f,0.0f,0.0f);
+		view_vec = glm::normalize(point_look_at - point_c);
 		aspect_ratio = 1.0f;
 		
 		auto view_vec = point_look_at - point_c;
@@ -315,7 +317,28 @@ namespace entity{
         float x = radius*cos(phi)*sin(theta);
 
 		point_c = glm::vec4(x,y,z,1.0f);
-		auto view_vec = point_look_at - point_c;
+		view_vec = glm::normalize(point_look_at - point_c);
+
+		view = mtx::cam_view(point_c,view_vec,up_vec);
+	}
+
+	auto Camera::update_position(Direction dir) -> void{
+		float velocity = 0.2;
+		if(dir == Stay) {
+			return;
+		}
+		if(dir == Front){
+			point_c = point_c + view_vec*velocity;
+		}
+		if(dir == Back){
+			point_c = point_c - view_vec*velocity;
+		}
+		if(dir == Right){
+			point_c = point_c + mtx::cross_prod(view_vec,up_vec)*velocity;
+		}
+		if(dir == Left){
+			point_c = point_c - mtx::cross_prod(view_vec,up_vec)*velocity;
+		}
 
 		view = mtx::cam_view(point_c,view_vec,up_vec);
 	}
