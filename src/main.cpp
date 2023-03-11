@@ -17,11 +17,12 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 //minhas implementações
-#include "shader.hpp"
-#include "matrix.hpp"
-#include "entities.hpp"
-#include "mesh.hpp"
-#include "collision.hpp"
+#include "renders/shader.hpp"
+#include "utils/matrix.hpp"
+#include "entities/entity.hpp"
+#include "entities/camera.hpp"
+#include "renders/mesh.hpp"
+#include "controlers/collision.hpp"
 
 
 #define PI 3.141592f
@@ -41,7 +42,7 @@ float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
 
-typedef struct {
+typedef struct PressedKeys{
 	bool w, a, s, d;
 } PressedKeys;
 PressedKeys g_keys{false, false, false, false};

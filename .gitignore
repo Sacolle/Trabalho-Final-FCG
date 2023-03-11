@@ -1,4 +1,4 @@
-bin/*
+bin
 parendizado-c++
 .vscode
-src/obj/*
+compiled-obj

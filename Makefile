@@ -3,22 +3,26 @@ FLAG_LIBS = -lgdi32 -lopengl32
 CPPFLAGS = -std=c++11 -Wall -Wno-unused-function -g -static-libstdc++
 INCLUDE = -I./include/
 
-OBJDIR = src/obj
+# directories of the project
+OBJDIR = obj
 LIBSDIR = src/libs
 SRCDIR = src
 INCLUDEDIR = include
 
-SRC = $(wildcard $(SRCDIR)/*.cpp)
+SRCFILES = collision.cpp gameloop.cpp \
+camera.cpp entity.cpp geometry.cpp \
+mesh.cpp renderable.cpp shader.cpp \
+matrix.cpp
 
-_OBJS := $(notdir $(SRC))
-_OBJS := $(patsubst %.cpp,%.o,$(_OBJS))    #convert to .o
+# os objs escritos a serem lincados
+_OBJS := $(patsubst %.cpp,%.o,$(SRCFILES)) #convert to .o
 OBJS  := $(addprefix $(OBJDIR)/, $(_OBJS))	#adds obj/ na frente
 
-_STATIC_OBJS := $(wildcard $(LIBSDIR)/*)
-_STATIC_OBJS := $(basename $(_STATIC_OBJS))
-_STATIC_OBJS := $(notdir $(_STATIC_OBJS))
-_STATIC_OBJS := $(addsuffix .o, $(_STATIC_OBJS))
-STATIC_OBJS := $(addprefix $(OBJDIR)/, $(_STATIC_OBJS))
+# os objs das libs a serem linkados
+_STATIC_OBJS := $(wildcard $(LIBSDIR)/*) #gets the files
+_STATIC_OBJS := $(notdir $(_STATIC_OBJS)) #removes the dir
+_STATIC_OBJS := $(patsubst %.cpp,%.o, $(_STATIC_OBJS)) #changes the cpp to o
+STATIC_OBJS := $(addprefix $(OBJDIR)/, $(_STATIC_OBJS)) #adds the objdir
 
 
 # $< nome do primeiro pre-requisito
@@ -27,27 +31,69 @@ STATIC_OBJS := $(addprefix $(OBJDIR)/, $(_STATIC_OBJS))
 bin/main: $(OBJS) $(STATIC_OBJS) ./lib/libglfw3.a
 	$(CXX) -o $@ $^ $(CPPFLAGS) $(FLAG_LIBS) 
 
-$(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(wildcard ./include/*.hpp) SRC
+#regras de compilação de cada arquivo do projeto
+MAIN_DEPENDS := \
+	renders/shader.hpp \
+	renders/mesh.hpp \
+	utils/matrix.hpp \
+	entities/geometry.hpp \
+	controlers/collision.hpp
+$(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(addprefix $(SRCDIR)/, $(MAIN_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/entities.o : $(addprefix $(SRCDIR)/, entities.cpp matrix.cpp shader.cpp collision.cpp) $(addprefix $(INCLUDEDIR)/,entities.hpp matrix.hpp shader.hpp collision.hpp)
+#controlers
+COLLISION_DEPENDS := \
+	controlers/collision.hpp \
+	entities/entity.hpp
+$(OBJDIR)/collision.o : $(SRCDIR)/controlers/collision.cpp $(addprefix $(SRCDIR)/, $(COLLISION_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/matrix.o : $(SRCDIR)/matrix.cpp $(addprefix $(INCLUDEDIR)/,matrix.hpp)
+GAMELOOP_DEPENDS := controlers/gameloop.hpp
+$(OBJDIR)/gameloop.o : $(SRCDIR)/controlers/gameloop.cpp $(addprefix $(SRCDIR)/, $(GAMELOOP_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/shader.o : $(SRCDIR)/shader.cpp $(addprefix $(INCLUDEDIR)/,shader.hpp)
+#entities
+CAMERA_DEPENDS := \
+	entities/camera.hpp \
+	utils/matrix.hpp
+$(OBJDIR)/camera.o : $(SRCDIR)/entities/camera.cpp $(addprefix $(SRCDIR)/, $(CAMERA_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/mesh.o : $(SRCDIR)/mesh.cpp $(addprefix $(INCLUDEDIR)/,mesh.hpp)
+ENTITY_DEPENDS := \
+	entities/entity.hpp \
+	entities/geometry.hpp \
+	renders/renderable.hpp
+$(OBJDIR)/entity.o : $(SRCDIR)/entities/entity.cpp $(addprefix $(SRCDIR)/, $(ENTITY_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-$(OBJDIR)/collision.o : $(SRCDIR)/collision.cpp $(SRCDIR)/entities.cpp $(addprefix $(INCLUDEDIR)/,collision.hpp entities.hpp)
+GEOMETRY_DEPENDS := \
+	entities/geometry.hpp \
+	utils/matrix.hpp
+$(OBJDIR)/geometry.o : $(SRCDIR)/entities/geometry.cpp $(addprefix $(SRCDIR)/,$(GEOMETRY_DEPENDS))	
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-#builds the src files versão generica e unreliable
-#$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCLUDEDIR)/%.hpp
-#	$(CXX) -c -o $@ $< $(INCLUDE) $(CPPFLAGS) 
+#renders
+MESH_DEPENDS := renders/mesh.hpp
+$(OBJDIR)/mesh.o : $(SRCDIR)/renders/mesh.cpp $(addprefix $(SRCDIR)/, $(MESH_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+SHADER_DEPENDS := renders/shader.hpp
+$(OBJDIR)/shader.o : $(SRCDIR)/renders/shader.cpp $(addprefix $(SRCDIR)/, $(SHADER_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+RENDERABLE_DEPENDS := \
+	renders/renderable.hpp \
+	renders/mesh.hpp \
+	renders/shader.hpp
+$(OBJDIR)/renderable.o : $(SRCDIR)/renders/renderable.cpp $(addprefix $(SRCDIR)/, $(RENDERABLE_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+#utils
+MATRIX_DEPENDS := utils/matrix.hpp
+$(OBJDIR)/matrix.o : $(SRCDIR)/utils/matrix.cpp $(addprefix $(SRCDIR)/, $(MATRIX_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+
 
 #builds the libs
 #builds imgui 
