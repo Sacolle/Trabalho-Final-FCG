@@ -93,20 +93,20 @@ namespace mtx{
 	}
 	auto rotate_rodriguez(float angle, glm::vec4 axis) -> glm::mat4 {
 		float c = cos(angle);
-		float s = sin(angle);
+    	float s = sin(angle);
 
-		glm::vec4 v = axis / norm(axis);
+    	glm::vec4 v = axis / norm(axis);
 
-		float vx = v.x;
-		float vy = v.y;
-		float vz = v.z;
+    	float vx = v.x;
+    	float vy = v.y;
+    	float vz = v.z;
 
-		return matrix(
-			vx*vx*(1.0f - c) + c    , vx*vy*(1.0f - c) + vz*s , vx*vz*(1.0f - c) + vy*s , 0.0f ,  // LINHA 1
-			vx*vy*(1.0f - c) + vz*s , vy*vy*(1.0f - c) + c    , vy*vz*(1.0f - c) + vx*s , 0.0f ,  // LINHA 2
-			vx*vz*(1.0f - c) + vy*s , vy*vz*(1.0f - c) + vx*s , vz*vz*(1.0f - c) + c    , 0.0f ,  // LINHA 3
-			0.0f                    , 0.0f   	              , 0.0f                 	, 1.0f    // LINHA 4
-		);
+    	return glm::mat4(
+        	vx*vx*(1-c) + c    , vx*vy*(1-c) - vz*s , vx*vz*(1-c) + vy*s , 0.0f ,  // LINHA 1
+        	vx*vy*(1-c) + vz*s , vy*vy*(1-c) + c    , vy*vz*(1-c) - vx*s , 0.0f ,  // LINHA 2
+        	vx*vz*(1-c) - vy*s , vy*vz*(1-c) + vx*s , vz*vz*(1-c) + c    , 0.0f ,  // LINHA 3
+            	  0.0f         ,       0.0f         ,       0.0f         , 1.0f    // LINHA 4
+    	);
 	}
 	auto cross_prod(glm::vec4 u, glm::vec4 v) -> glm::vec4 {
 		float u1 = u.x;
@@ -120,7 +120,7 @@ namespace mtx{
 			u2*v3 - u3*v2, // Primeiro coeficiente
 			u3*v1 - u1*v3, // Segundo coeficiente
 			u1*v2 - u2*v1, // Terceiro coeficiente
-			0.0f // w = 0 para vetores.
+			0.0f 		   // w = 0 para vetores.
 		);
 	}
 	//throws errors
@@ -149,6 +149,10 @@ namespace mtx{
 		w = w / norm(w);
 		u = u / norm(u);
 
+		//printf("\n %f %f %f %f\n", view_vec.x, view_vec.y, view_vec.z, view_vec.w);
+		//printf("\n %f %f %f %f\n", up_vec.x, up_vec.y, up_vec.z, up_vec.w);
+		//printf("\n %f %f %f %f\n", u.x, u.y, u.z, u.w);
+
 		glm::vec4 v = cross_prod(w,u);
 
 		glm::vec4 origin_o = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -161,7 +165,7 @@ namespace mtx{
 			ux  ,  uy  ,  uz  , dot_prod(-u,pos_c - origin_o) ,  // LINHA 1
 			vx  ,  vy  ,  vz  , dot_prod(-v,pos_c - origin_o) ,  // LINHA 2
 			wx  ,  wy  ,  wz  , dot_prod(-w,pos_c - origin_o) ,  // LINHA 3
-			0.0f,  0.0f,  0.0f, 1.0f                                    // LINHA 4
+			0.0f,  0.0f,  0.0f, 1.0f                             // LINHA 4
 		);
 	}
 	auto orthographic(float l, float r, float b, float t, float n, float f) -> glm::mat4 {

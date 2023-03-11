@@ -323,7 +323,7 @@ namespace entity{
 	}
 
 	auto Camera::update_position(Direction dir) -> void{
-		float velocity = 0.2;
+		float velocity = 0.2f;
 		if(dir == Stay) {
 			return;
 		}
@@ -339,6 +339,26 @@ namespace entity{
 		if(dir == Left){
 			point_c = point_c - mtx::cross_prod(view_vec,up_vec)*velocity;
 		}
+
+		view = mtx::cam_view(point_c,view_vec,up_vec);
+	}
+
+	auto Camera::update_view(float *angleX, float *angleZ) -> void{
+		if(*angleX == 0 && *angleZ == 0) return;
+
+		// ROTAÇÃO VERTICAL
+    	glm::vec4 lado = mtx::cross_prod(up_vec, view_vec); // Calcula o lado, para rotacionar verticalmente
+    	glm::vec4 aux = view_vec * mtx::rotate_rodriguez(*angleZ, lado);   // Rotação no eixo lado (vertical)
+
+    	// TRAVA DA ROTAÇÃO VERTICAL
+    	if(mtx::dot_prod(lado, mtx::cross_prod(up_vec, aux)) > 0) // Testa se o novo valor de lado é igual ao antigo
+        	view_vec = aux;                                 // Caso seja, salva o novo camera_view (permite a rotação)
+
+    	// ROTAÇÃO HORIZONTAL
+    	view_vec = view_vec * mtx::rotate_rodriguez(-*angleX, up_vec); // Rotação no eixo up (horizontal)
+
+		*angleX = 0.0f;
+		*angleZ = 0.0f;
 
 		view = mtx::cam_view(point_c,view_vec,up_vec);
 	}

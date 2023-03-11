@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#define _USE_MATH_DEFINES
 
 // Headers abaixo são específicos de C++
 #include <vector>
@@ -42,6 +43,13 @@ float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
 bool freeCam = false;
+float angleX = 0.0f;
+float angleZ = 0.0f;
+
+typedef struct {
+	float width, height;
+} WindowSize;
+WindowSize windowSize;
 
 typedef struct {
 	bool w, a, s, d;
@@ -167,6 +175,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		else{
 			Direction dir = camera_movement();
 			camera->update_position(dir);
+			camera->update_view(&angleX, &angleZ);
 		}
 		
 		camera->update_aspect_ratio(g_ScreenRatio);
@@ -248,7 +257,7 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //usa-se apenas as funções modernas de OpenGL(perfil "core").
     //cria uma janela 800x800
-    GLFWwindow* window = glfwCreateWindow(800, 800, "INF01047 - 00333916 - Pedro Henrique Boniatti Colle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 800, "INF01047 - 00333916 - Pedro Henrique Boniatti Colle / 00334087 - Eduardo Dalmás Faé", NULL, NULL);
     if (!window){
         glfwTerminate();
        	std::cerr << "ERROR: glfwCreateWindow() failed.\n" << std::endl;
@@ -257,6 +266,8 @@ int main(int argc, char** argv)
     //callback para o resize da janela, em q se deve realocar a memoria
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
     glfwSetWindowSize(window, 800, 800); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+	windowSize.width  = 800;
+	windowSize.height = 800;
 
     glfwSetMouseButtonCallback(window, MouseButtonCallback); //botao do mouse
     glfwSetCursorPosCallback(window, CursorPosCallback); //movimentar o cursor
@@ -300,28 +311,18 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     }
 }
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
-    if (!g_LeftMouseButtonPressed)
-        return;
-
-    float dx = xpos - g_LastCursorPosX;
+	float dx = xpos - g_LastCursorPosX;
     float dy = ypos - g_LastCursorPosY;
 
-    g_CameraTheta -= 0.01f*dx;
-    g_CameraPhi   -= 0.01f*dy;
-
-    float phimax = PI/2;
-    float phimin = -phimax;
-
-    if (g_CameraPhi > phimax)
-        g_CameraPhi = phimax;
-
-    if (g_CameraPhi < phimin)
-        g_CameraPhi = phimin;
-
-    // Atualizamos as variáveis globais para armazenar a posição atual do
+	// Atualizamos as variáveis globais para armazenar a posição atual do
     // cursor como sendo a última posição conhecida do cursor.
     g_LastCursorPosX = xpos;
     g_LastCursorPosY = ypos;
+
+	if(!freeCam) return;
+
+    angleX = dx/(windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
+    angleZ = dy/(windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
 }
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
@@ -355,6 +356,10 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	}
 	if(key == GLFW_KEY_P && action == GLFW_PRESS){
 		freeCam = !freeCam;
+		if(freeCam)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
     // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;
@@ -409,6 +414,9 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_ScreenRatio = (float)width / height;
+
+	windowSize.width  = width;   // Salva a largura da tela
+    windowSize.height = height; // Salva a altura da tela
 }
 // Definimos o callback para impressão de erros da GLFW no terminal
 void ErrorCallback(int error, const char* description)
