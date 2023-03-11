@@ -298,7 +298,7 @@ namespace entity{
 		view = mtx::cam_view(point_c,view_vec,up_vec);
 
 		if(is_perspective){
-			projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -0.1f,-20.0f);
+			projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -0.1f,-200.0f);
 		}else{
 			std::throw_with_nested(std::invalid_argument("Não implementei para ortográfico, LOL"));
 		}
@@ -322,11 +322,8 @@ namespace entity{
 		view = mtx::cam_view(point_c,view_vec,up_vec);
 	}
 
-	auto Camera::update_position(Direction dir) -> void{
-		float velocity = 0.2f;
-		if(dir == Stay) {
-			return;
-		}
+	auto Camera::update_position(Direction dir, int size) -> void{
+		float velocity = (4/size)*0.2f;
 		if(dir == Front){
 			point_c = point_c + view_vec*velocity;
 		}

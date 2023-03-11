@@ -29,7 +29,7 @@
 
 void print_exception(const std::exception& e, int level);
 auto player_movement() -> float;
-auto camera_movement() -> Direction;
+auto camera_movement(std::vector<Direction> &dir) -> void;
 
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
@@ -173,8 +173,11 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 			}
 		}
 		else{
-			Direction dir = camera_movement();
-			camera->update_position(dir);
+			std::vector<Direction> dir;
+			camera_movement(dir);
+			for(const auto &pos : dir)
+				camera->update_position(pos, dir.size());
+			dir.clear();
 			camera->update_view(&angleX, &angleZ);
 		}
 		
@@ -226,20 +229,19 @@ auto player_movement() -> float{
 	if(components == 0) return -1;
 	return angle/components;
 }
-auto camera_movement() -> Direction{
+auto camera_movement(std::vector<Direction> &dir) -> void{
 	if(g_keys.w){
-		return Front;
+		dir.emplace_back(Front);
 	}
 	if(g_keys.a){
-		return Left;
+		dir.emplace_back(Left);
 	}
 	if(g_keys.s){
-		return Back;
+		dir.emplace_back(Back);
 	}
 	if(g_keys.d){
-		return Right;
+		dir.emplace_back(Right);
 	}
-	return Stay;
 }
 int main(int argc, char** argv)
 {
@@ -361,53 +363,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 		else
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
-/*
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-    }
-
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
-    }
-*/
 }
 //Função para a redimensão da janela
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height)

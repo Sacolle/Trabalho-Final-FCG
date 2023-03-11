@@ -15,8 +15,7 @@ enum Direction{
 	Front,
 	Back,
 	Right,
-	Left,
-	Stay
+	Left
 };
 
 namespace entity{
@@ -158,7 +157,7 @@ namespace entity{
 			Camera(bool is_perspective);
 			auto update_aspect_ratio(float aspect_ratio) -> void;
 			auto update_position(float phi, float theta, float radius) -> void;
-			auto update_position(Direction dir) -> void;
+			auto update_position(Direction dir, int size) -> void;
 			auto update_view(float *angleX, float *angleZ) -> void;
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }
