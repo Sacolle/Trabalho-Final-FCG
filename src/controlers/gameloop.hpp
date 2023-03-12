@@ -36,7 +36,7 @@ namespace controler{
 		auto render_bbox() -> void;
 		auto update_player(float delta_time, entity::PressedKeys &keys) -> void;
 		auto update_enemies(float delta_time) -> void;
-		auto update_camera(float delta_time) -> void;
+		auto update_camera(float delta_time, entity::PressedKeys &keys) -> void ;
 
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;

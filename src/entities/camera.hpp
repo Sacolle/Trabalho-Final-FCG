@@ -7,12 +7,20 @@
 #include "../utils/matrix.hpp"
 
 namespace entity{
+	enum Direction{
+		Front,
+		Back,
+		Right,
+		Left
+	};
+
 	class Camera {
 		public:
 			Camera();
 			auto update_aspect_ratio(float aspect_ratio) -> void;
 			auto update_position(float phi, float theta, float radius) -> void;
-			auto update_position() -> void;
+			auto update_position(Direction dir, int size, float delta_time) -> void;
+			auto update_view(float *angleX, float *angleZ) -> void;
 			inline auto set_angles(float _phi, float _theta, float _radius) -> void {
 				phi = _phi;
 				theta = _theta;
@@ -27,7 +35,7 @@ namespace entity{
 			float theta;
 			float phi;
 			float radius;
-			//glm::vec4 direction; //used as point_c and view_vector
+			glm::vec4 direction; //used as point_c and view_vector
 			
 			//for free cam
 			glm::vec4 camera_position;

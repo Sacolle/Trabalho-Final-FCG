@@ -14,7 +14,7 @@ namespace controler{
 	auto GameLoop::next_frame(float delta_time, entity::PressedKeys &keys) -> void {
 		update_player(delta_time, keys);
 		update_enemies(delta_time);
-		update_camera(delta_time);
+		update_camera(delta_time, keys);
 		/*
 		camera->update_position(phi,theta,distance);
 		camera->update_aspect_ratio(g_ScreenRatio);
@@ -91,7 +91,32 @@ namespace controler{
 	auto GameLoop::update_enemies(float delta_time) -> void {
 
 	}
-	auto GameLoop::update_camera(float delta_time) -> void {
-
+	auto GameLoop::update_camera(float delta_time, entity::PressedKeys &keys) -> void {
+		if(!camera->freeCam){
+			if(!freeCam){
+			camera->update_position(phi,theta,distance);
+		}
+		else{
+			std::vector<entity::Direction> dir;
+			if(keys.w){
+				dir.emplace_back(entity::Front);
+			}
+			if(keys.a){
+				dir.emplace_back(entity::Left);
+			}
+			if(keys.s){
+				dir.emplace_back(entity::Back);
+			}
+			if(keys.d){
+				dir.emplace_back(entity::Right);
+			}
+			for(const auto &pos : dir)
+				camera->update_position(pos, dir.size(), delta_time);
+			dir.clear();
+			camera->update_view(&angleX, &angleZ);
+		}
+		
+		camera->update_aspect_ratio(g_ScreenRatio);
+		}
 	}
 }

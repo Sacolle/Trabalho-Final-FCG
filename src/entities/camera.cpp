@@ -10,8 +10,8 @@ namespace entity{
 		aspect_ratio(1.0f), near_plane(0.1f), far_plane(20.0f)
 	{
 		const auto point_c = glm::vec4(0.0f,0.0f,1.0f,1.0f);
-		auto view_vec = point_look_at - point_c;
-		view = mtx::cam_view(point_c,view_vec,up_vec);
+		direction = point_look_at - point_c;
+		view = mtx::cam_view(point_c,direction,up_vec);
 
 		projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -near_plane,-far_plane);
 	}
@@ -27,9 +27,27 @@ namespace entity{
         float z = radius*cos(phi)*cos(theta);
         float x = radius*cos(phi)*sin(theta);
 
-		const auto direction = glm::vec4(x,y,z,1.0f);
-		auto view_vec = point_look_at - direction ;
+		camera_position = glm::vec4(x,y,z,1.0f);
+		direction = glm::normalize(point_look_at - camera_position);
 
-		view = mtx::cam_view(direction,view_vec,up_vec);
+		view = mtx::cam_view(camera_position,direction,up_vec);
+	}
+	auto Camera::update_position(Direction dir, int size, float delta_time) -> void{
+		float velocity = (4/size) * 0.2f * delta_time;
+		
+		if(dir == Front){
+			camera_position = camera_position + direction*velocity;
+		}
+		if(dir == Back){
+			camera_position = camera_position - direction*velocity;
+		}
+		if(dir == Right){
+			camera_position = camera_position + mtx::cross_prod(direction,up_vec)*velocity;
+		}
+		if(dir == Left){
+			camera_position = camera_position - mtx::cross_prod(direction,up_vec)*velocity;
+		}
+
+		view = mtx::cam_view(camera_position,direction,up_vec);
 	}
 }

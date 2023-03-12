@@ -320,23 +320,8 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     }
 }
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
-    if (!g_LeftMouseButtonPressed)
-        return;
-
     float dx = xpos - g_LastCursorPosX;
     float dy = ypos - g_LastCursorPosY;
-
-    g_CameraTheta -= 0.01f*dx;
-    g_CameraPhi   -= 0.01f*dy;
-
-    float phimax = PI/2;
-    float phimin = -phimax;
-
-    if (g_CameraPhi > phimax)
-        g_CameraPhi = phimax;
-
-    if (g_CameraPhi < phimin)
-        g_CameraPhi = phimin;
 
     // Atualizamos as variáveis globais para armazenar a posição atual do
     // cursor como sendo a última posição conhecida do cursor.
@@ -372,6 +357,13 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	}
 	if(key == GLFW_KEY_A && action == GLFW_RELEASE){
 		g_keys.a = false;
+	}
+	if(key == GLFW_KEY_P && action == GLFW_PRESS){
+		camera->freeCam = !camera->freeCam;
+		if(freeCam)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
     // O código abaixo implementa a seguinte lógica:
     //   Se apertar tecla X       então g_AngleX += delta;
