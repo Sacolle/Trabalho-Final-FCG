@@ -5,40 +5,39 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../utils/matrix.hpp"
+#include "../entities/entity.hpp"
+
+#define TOTAL_DIRECTIONS 4
 
 namespace entity{
-	enum Direction{
-		Front,
-		Back,
-		Right,
-		Left
-	};
-
+	typedef struct LookAtParameters{
+		float phi, theta, radius;
+	} LookAtParameters;
+	typedef struct RotationAngles{
+		float angleX, angleZ;
+	} RotationAngles;
 	class Camera {
 		public:
 			Camera();
 			auto update_aspect_ratio(float aspect_ratio) -> void;
-			auto update_position(float phi, float theta, float radius) -> void;
-			auto update_position(Direction dir, int size, float delta_time) -> void;
-			auto update_view(float *angleX, float *angleZ) -> void;
-			inline auto set_angles(float _phi, float _theta, float _radius) -> void {
-				phi = _phi;
-				theta = _theta;
-				radius = _radius;
+			auto update_position(LookAtParameters &parameters) -> void;
+			auto update_position(entity::PressedKeys &keys, float delta_time) -> void;
+			auto update_view(RotationAngles &angles) -> void;
+			inline auto set_angles(LookAtParameters &parameters) -> void {
+				look_at_parameters.phi = parameters.phi;
+				look_at_parameters.theta = parameters.theta;
+				look_at_parameters.radius = parameters.radius;
 			}
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }
 		private:
-			bool free_cam;
-
 			glm::vec4 up_vec;
-			float theta;
-			float phi;
-			float radius;
-			glm::vec4 direction; //used as point_c and view_vector
+			LookAtParameters look_at_parameters;
+			glm::vec4 camera_direction; //used as point_c and view_vector
 			
 			//for free cam
 			glm::vec4 camera_position;
+			float cam_speed;
 
 			//for look_at camera
 			glm::vec4 point_look_at; 
@@ -49,5 +48,7 @@ namespace entity{
 
 			glm::mat4 projection;
 			glm::mat4 view;
+
+			auto sum_direction(entity::PressedKeys &keys) -> float;
 	};
 }

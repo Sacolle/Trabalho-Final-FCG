@@ -38,14 +38,18 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 //global values, TODO: organize in a struct
 float g_ScreenRatio = 1.0f;
-float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
+entity::LookAtParameters look_at_parameters {0.0f, 0.0f, 0.0f};
+entity::RotationAngles angles {0.0f, 0.0f};
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
+bool paused = false;
 
-typedef struct PressedKeys{
-	bool w, a, s, d;
-} PressedKeys;
-PressedKeys g_keys{false, false, false, false};
+typedef struct {
+	float width, height;
+} WindowSize;
+WindowSize windowSize;
+
+entity::PressedKeys g_keys{false, false, false, false};
 
 void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
 	//carrega os shaders
@@ -215,37 +219,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
         glfwSwapBuffers(window);
     }
 }
-auto player_movement() -> float{
-	/*
-	TODO: setup an interpolation of positions, so as the rotations to the foward direction feel smoother
-	fowards is -z
-	right is x
-	*/
-	float components = 0;
-	float angle = 0;
-	if(g_keys.w){
-		angle += PI/2;
-		components++;
-	}
-	if(g_keys.a){
-		angle += PI;
-		components++;
-	}
-	if(g_keys.s){
-		angle += PI + PI/2;
-		components++;
-	}
-	if(g_keys.d){
-		if(angle >= PI){
-			angle += PI + PI;
-		}else{
-			angle += 0;
-		}
-		components++;
-	}
-	if(components == 0) return -1;
-	return angle/components;
-}
 int main(int argc, char** argv)
 {
 	if(argc < 3){
@@ -271,6 +244,8 @@ int main(int argc, char** argv)
     //callback para o resize da janela, em q se deve realocar a memoria
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
     glfwSetWindowSize(window, 800, 800); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+	windowSize.width  = 800;
+	windowSize.height = 800;
 
     glfwSetMouseButtonCallback(window, MouseButtonCallback); //botao do mouse
     glfwSetCursorPosCallback(window, CursorPosCallback); //movimentar o cursor
@@ -327,6 +302,11 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
     // cursor como sendo a última posição conhecida do cursor.
     g_LastCursorPosX = xpos;
     g_LastCursorPosY = ypos;
+
+	if(!paused) return;
+	
+    angles.angleX = dx/(windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
+    angles.angleZ = dy/(windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
 }
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
@@ -359,8 +339,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 		g_keys.a = false;
 	}
 	if(key == GLFW_KEY_P && action == GLFW_PRESS){
-		camera->freeCam = !camera->freeCam;
-		if(freeCam)
+		paused = !paused;
+		if(paused)
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		else
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -418,6 +398,9 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_ScreenRatio = (float)width / height;
+
+	windowSize.width  = width;   // Salva a largura da tela
+    windowSize.height = height; // Salva a altura da tela
 }
 // Definimos o callback para impressão de erros da GLFW no terminal
 void ErrorCallback(int error, const char* description)

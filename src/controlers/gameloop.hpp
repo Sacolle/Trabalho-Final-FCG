@@ -19,7 +19,7 @@ namespace controler{
 
 		~GameLoop();
 		//TODO: return a gameover so that it can change screens
-		auto next_frame(float delta_time, entity::PressedKeys &keys) -> void;
+		auto next_frame(entity::PressedKeys &keys, entity::RotationAngles &angles, entity::LookAtParameters &parameters, float delta_time, float screen_ratio, bool paused) -> void ;
 
 		auto insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto insert_wall(std::shared_ptr<entity::Wall> wall) -> void;
@@ -36,7 +36,8 @@ namespace controler{
 		auto render_bbox() -> void;
 		auto update_player(float delta_time, entity::PressedKeys &keys) -> void;
 		auto update_enemies(float delta_time) -> void;
-		auto update_camera(float delta_time, entity::PressedKeys &keys) -> void ;
+		auto update_camera(entity::LookAtParameters &parameters, float screen_ratio) -> void;
+		auto update_camera(entity::PressedKeys &keys, entity::RotationAngles &angles, float delta_time, float screen_ratio) -> void;
 
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;

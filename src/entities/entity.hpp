@@ -61,6 +61,7 @@ namespace entity{
 	typedef struct PressedKeys{
 		bool w, a, s, d;
 	} PressedKeys;
+	
 	class Player : public Entity {
 		public:
 			//Player(){}

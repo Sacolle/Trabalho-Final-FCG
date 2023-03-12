@@ -91,6 +91,9 @@ namespace mtx{
 
 		return sqrt( vx*vx + vy*vy + vz*vz );
 	}
+	auto normalize(glm::vec4 vec) -> glm::vec4 {
+		return vec/norm(vec);
+	}
 	auto rotate_rodriguez(float angle, glm::vec4 axis) -> glm::mat4 {
 		float c = cos(angle);
 		float s = sin(angle);
