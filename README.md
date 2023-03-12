@@ -7,13 +7,18 @@ O jogo desenvolvido será baseado no conceito de fuga de zumbis. Nele um jogador
 Busca-se, como extra no projeto, implementar formas de atrasar os zumbis e matá-los, assim como diferentes tipos de zumbis. Por fim, com tempo extra, a implementação da geração do mapa de forma automática, usando o algoritmo ‘wave function colapse’ seria de interesse da dupla.
 Estilisticamente buca-se inspiração no jogo Minecraf, a short hike e Yiik a postodern rpg.
 
+---
+Para fazer rodar adicione na root as pastas libglfw, bin e compiled-obj. (pq eu não sou muito bom com make)
+na pasta libglfw deve colocar o arquvio libglfw3.a respectivo a seu sistema, que poder ser encontrado no site do [glfw](glfw.org)
+
+---
 Roadmap de Implementação:
 - [x] Realização do render na Tela.
 - [x] Realização do render usando a perspectiva de uma câmera.
 - [x] Implementação do Load de Meshes em .obj files.
 	- [x] Vertices e índices em .obj com um único elemento
-	- [ ] Carregamento dos demais atributos.
-	- [ ] Carregamento de mais de um elemento por .obj file.
+	- [x] Carregamento dos demais atributos.
+	- [x] Carregamento de mais de um elemento por .obj file.
 - [x] Implementação da estrutura de Entidades em Classes.
 - [x] Implementação dos controles do player.
 	- [x] Implemeção da movimentação.
@@ -24,8 +29,8 @@ Roadmap de Implementação:
 - [x] Implementação da colisão de Entidades.
 	- [x] Implementação das Bounding Boxes.
 	- [x] Implementação dos Wire Frames para mostrar as Bounding Boxes.
-	- [ ] Implementação das Funções de Colisão.
-	- [ ] Implementação de um alritmo de Spacial Hash para gerir as colisões.
+	- [x] Implementação das Funções de Colisão.
+	- [x] Implementação de um alritmo de Spacial Hash para gerir as colisões.
 - [ ] Implementação do Game Loop.
 	- [ ] Spawn de Inimigos.
 	- [ ] Path finding dos zumbis usando o algoritmo A*.

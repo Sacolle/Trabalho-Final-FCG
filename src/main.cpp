@@ -23,9 +23,13 @@
 #include "entities/camera.hpp"
 #include "renders/mesh.hpp"
 #include "controlers/collision.hpp"
+#include "controlers/gameloop.hpp"
 
 
 #define PI 3.141592f
+#define TARGET_FRAME_RATE 60.0f
+#define log(text) std::cout << text << std::endl
+
 
 void print_exception(const std::exception& e, int level);
 auto player_movement() -> float;
@@ -42,10 +46,7 @@ float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
 float g_LeftMouseButtonPressed;
 double g_LastCursorPosX, g_LastCursorPosY;
 
-typedef struct PressedKeys{
-	bool w, a, s, d;
-} PressedKeys;
-PressedKeys g_keys{false, false, false, false};
+entity::PressedKeys g_keys{false, false, false, false};
 
 void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
 	//carrega os shaders
@@ -60,7 +61,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
-	std::unique_ptr<entity::Camera> camera (new entity::Camera());
 
 	//render::ParsedObjMesh teapot_load_mesh;
 	render::ParsedObjMesh cube_load_mesh;
@@ -84,51 +84,36 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-/*
-	std::shared_ptr<entity::Entity> player(
-		new entity::Entity(
-			gpu_program, teapot_mesh, cylinder_wire_mesh,
-			glm::vec4(4,0,4,1), glm::vec4(1,0,0,0), 0.05f,
-			0, 0, 0,
-			2, 1, 1,
-			2, 2, 1.25, entity::BBoxType::Cylinder
-		)
-	);
+	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, pawn_mesh));
+	pawn->set_wire_mesh(cylinder_wire_mesh);
+	pawn->set_wire_renderer(wire_renderer);
+	pawn->set_bbox_type(entity::BBoxType::Cylinder);
+	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
+	std::shared_ptr<entity::Enemy> cube(new entity::Enemy(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
+	cube->set_wire_mesh(cube_wire_mesh);
+	cube->set_wire_renderer(wire_renderer);
 
-*/
-	std::shared_ptr<entity::Entity> cube(
-		new entity::Entity(
-			gpu_program, wire_renderer, cube_mesh, cube_wire_mesh,
-			glm::vec4(0.01,0,0.01,1), glm::vec4(1,0,0,0), 0.01f,
-			0, 0, 0,
-			1, 1, 1,
-			1, 1, 1, entity::BBoxType::Rectangle
-		)
+	log("inicializando o controler");
+
+	controler::GameLoop game_controler(
+		std::unique_ptr<entity::Camera>(new entity::Camera()),
+		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
+		pawn
 	);
-	std::shared_ptr<entity::Entity> pawn(
-		new entity::Entity(
-			gpu_program, wire_renderer, pawn_mesh, cylinder_wire_mesh,
-			glm::vec4(-3,0,0.01,1), glm::vec4(1,0,0,0), 0.01f,
-			0, 0, 0,
-			1, 1, 1,
-			1.5f, 1.5f, 1, entity::BBoxType::Cylinder
-		)
-	);
-	/*
-	utils::CollisionMap collision_map(100,100,2,2);
-	collision_map.insert_mover(player);
-	collision_map.insert_mover(cube);
-	*/
+	log("inserindo o inimigo");
+	game_controler.insert_enemy(cube);
+
 	float phi = 0.0f, theta = 0.0f, distance = 8.0f;
-	float x = 0, y = -1.25, z = 0;
-	bool show_camera_movment = true;
+	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
+
+	log("iniciando o loop de render");
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
 		glfwPollEvents();
 		float now = (float)glfwGetTime();
-		float delta_time = now - last_frame;
+		float delta_time = (now - last_frame) * TARGET_FRAME_RATE;
 		last_frame = now;
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -136,115 +121,28 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Editor");                          // Create a window called "Hello, world!" and append into it.
-			ImGui::Checkbox("Camera Movment",&show_camera_movment);
-            ImGui::Text("Base translate");               // Display some text (you can use a format strings too)
-            ImGui::SliderFloat("x", &x, -5.0f, 5.0f);
-            ImGui::SliderFloat("y", &y, -5.0f, 5.0f);
-            ImGui::SliderFloat("z", &z, -5.0f, 5.0f);
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-		}
-		if(show_camera_movment){
 			ImGui::Begin("Camera Movment");
-            ImGui::Text("Move the camera");               // Display some text (you can use a format strings too)
             ImGui::SliderFloat("phi", &phi, 0.0f, 3.14f);
             ImGui::SliderFloat("theta", &theta, 0.0f, 3.14f);
             ImGui::SliderFloat("distance", &distance, 2.5f, 20.0f);
-
+			ImGui::Checkbox("render bbox", &render_bbox);
 			ImGui::End();
 		}
-
-		ImGui::Render();
-  
-        glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
+	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
-		//set GPU and camera projections
-		camera->update_position(phi,theta,distance);
-		camera->update_aspect_ratio(g_ScreenRatio);
-		gpu_program->use_prog();
-		gpu_program->set_mtx("view",camera->get_view_ptr());
-		gpu_program->set_mtx("projection",camera->get_projection_ptr());
-
-		//If it colides with an object, it pushes the entity a little in the oposite direction
-		/*
-		const float angle = player_movement();
-		if(angle != -1){
-			player->set_y_angle(angle);
-			collision_map.remove_mover(player);
-
-			const auto player_dx = player->get_parcial_direction_x();
-			const auto collided_with_dx = collision_map.colide_direction(player,player_dx);
-			if(collided_with_dx == nullptr){
-				player->translate_direction(player_dx);
-			}else{
-				const auto collision_normal = player->get_cords() - collided_with_dx->get_cords();
-				player->translate_direction(collision_normal/mtx::norm(collision_normal));
-			}
-			const auto player_dz = player->get_parcial_direction_z();
-			const auto collided_with_dz = collision_map.colide_direction(player,player_dz);
-			if(collided_with_dz == nullptr){
-				player->translate_direction(player_dz);
-			}else{
-				const auto collision_normal = player->get_cords() - collided_with_dz->get_cords();
-				player->translate_direction(collision_normal/mtx::norm(collision_normal));
-			}
-
-			collision_map.insert_mover(player);
-		}*/
-		//correction translation to set the origin at the center of the model
-		//player->set_base_translate(x,y,z);
-		  
-		  /*
-		player->draw();
-		player->draw_wire();
-
-*/
-		cube->draw();
-		pawn->draw();
-
-		wire_renderer->use_prog();
-		wire_renderer->set_mtx("view",camera->get_view_ptr());
-		wire_renderer->set_mtx("projection",camera->get_projection_ptr());
-
-		cube->draw_wire();
-		pawn->draw_wire();
+		game_controler.update_camera(phi,theta,distance,delta_time);
+		game_controler.update_player(delta_time,g_keys);
+		game_controler.render_frame(gpu_program);
+		if(render_bbox){
+			game_controler.render_bbox(wire_renderer);
+		}
+  
+		ImGui::Render();
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
-}
-auto player_movement() -> float{
-	/*
-	TODO: setup an interpolation of positions, so as the rotations to the foward direction feel smoother
-	fowards is -z
-	right is x
-	*/
-	float components = 0;
-	float angle = 0;
-	if(g_keys.w){
-		angle += PI/2;
-		components++;
-	}
-	if(g_keys.a){
-		angle += PI;
-		components++;
-	}
-	if(g_keys.s){
-		angle += PI + PI/2;
-		components++;
-	}
-	if(g_keys.d){
-		if(angle >= PI){
-			angle += PI + PI;
-		}else{
-			angle += 0;
-		}
-		components++;
-	}
-	if(components == 0) return -1;
-	return angle/components;
 }
 int main(int argc, char** argv)
 {

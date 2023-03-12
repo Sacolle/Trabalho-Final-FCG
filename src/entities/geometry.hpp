@@ -21,6 +21,7 @@ namespace entity{
 				float x_angle, float y_angle, float z_angle,
 				float x_scale, float y_scale, float z_scale,
 				float x_radius, float z_radius, float height, BBoxType bbox_type);
+			Geometry(glm::vec4 cords);
 			Geometry();
 
 			virtual ~Geometry();
@@ -63,11 +64,16 @@ namespace entity{
 			inline auto set_x_radius(float x) -> void { x_radius = x; }
 			inline auto set_height(float y) -> void { height = y; }
 			inline auto set_z_radius(float z) -> void { z_radius = z; }
+
+			inline auto set_bbox_size(float x, float y, float z) -> void {x_radius = x; height = y; z_radius = z; }
 			inline auto get_transform() const -> glm::mat4 {
 				return translation * rotation * scaling * base_translate;
 			}
 			inline auto get_translation() const -> glm::mat4 {
 				return translation;
+			} 
+			inline auto get_bbox_scale() const -> glm::mat4 {
+				return mtx::scale(x_radius,height,z_radius);
 			}
 		private:
 			//world coordinates

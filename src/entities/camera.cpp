@@ -7,7 +7,7 @@ namespace entity{
 	***************************/
 	Camera::Camera(): point_look_at(glm::vec4(0.0f,0.0f,0.0f,1.0f)),
 		up_vec(glm::vec4(0.0f,1.0f,0.0f,0.0f)),
-		aspect_ratio(1.0f), near_plane(0.1f), far_plane(20.0f)
+		aspect_ratio(1.0f), near_plane(0.1f), far_plane(200.0f)
 	{
 		const auto point_c = glm::vec4(0.0f,0.0f,1.0f,1.0f);
 		auto view_vec = point_look_at - point_c;
