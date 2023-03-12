@@ -25,7 +25,20 @@ namespace entity{
 		set_rotation();
 		set_translation();
 		set_scaling();
+		set_base_translate(0,0,0);
 	}
+
+	Geometry::Geometry(glm::vec4 cords):
+	cords(cords), direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)), speed(0.01f),
+	base_direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)),
+	x_angle(0), y_angle(0), z_angle(0),
+	x_scale(1), y_scale(1), z_scale(1),
+	x_radius(1), z_radius(1), height(1), bbox_type(BBoxType::Rectangle) {
+		set_rotation();
+		set_translation();
+		set_scaling();
+		set_base_translate(0,0,0);
+	} 
 	Geometry::Geometry():
 	cords(glm::vec4(0.01f,0.01f,0.01f,0.0f)), direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)), speed(0.01f),
 	base_direction(glm::vec4(1.0f,0.0f,0.0f,0.0f)),
@@ -35,6 +48,7 @@ namespace entity{
 		set_rotation();
 		set_translation();
 		set_scaling();
+		set_base_translate(0,0,0);
 	}
 	Geometry::~Geometry(){
 

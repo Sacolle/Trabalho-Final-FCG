@@ -4,12 +4,13 @@ CPPFLAGS = -std=c++11 -Wall -Wno-unused-function -g -static-libstdc++
 INCLUDE = -I./include/
 
 # directories of the project
-OBJDIR = obj
+OBJDIR = compiled-obj
 LIBSDIR = src/libs
 SRCDIR = src
 INCLUDEDIR = include
 
-SRCFILES = collision.cpp gameloop.cpp \
+SRCFILES = main.cpp \
+collision.cpp gameloop.cpp \
 camera.cpp entity.cpp geometry.cpp \
 mesh.cpp renderable.cpp shader.cpp \
 matrix.cpp main.cpp
@@ -22,13 +23,14 @@ OBJS  := $(addprefix $(OBJDIR)/, $(_OBJS))	#adds obj/ na frente
 _STATIC_OBJS := $(wildcard $(LIBSDIR)/*) #gets the files
 _STATIC_OBJS := $(notdir $(_STATIC_OBJS)) #removes the dir
 _STATIC_OBJS := $(patsubst %.cpp,%.o, $(_STATIC_OBJS)) #changes the cpp to o
+_STATIC_OBJS := $(patsubst %.c,%.o, $(_STATIC_OBJS)) #changes the cpp to o
 STATIC_OBJS := $(addprefix $(OBJDIR)/, $(_STATIC_OBJS)) #adds the objdir
 
 
 # $< nome do primeiro pre-requisito
 # $@ é o nome da regra
 # $^ é a string das dependencias, nesse caso $(OBJS)
-bin/main: $(OBJS) $(STATIC_OBJS) ./lib/libglfw3.a
+bin/main: $(OBJS) $(STATIC_OBJS) ./libglfw/libglfw3.a
 	$(CXX) -o $@ $^ $(CPPFLAGS) $(FLAG_LIBS) 
 
 #regras de compilação de cada arquivo do projeto
@@ -48,7 +50,13 @@ COLLISION_DEPENDS := \
 $(OBJDIR)/collision.o : $(SRCDIR)/controlers/collision.cpp $(addprefix $(SRCDIR)/, $(COLLISION_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
-GAMELOOP_DEPENDS := controlers/gameloop.hpp
+GAMELOOP_DEPENDS := \
+	controlers/gameloop.hpp \
+	entities/entity.hpp \
+	entities/camera.hpp \
+	renders/shader.hpp \
+	controlers/collision.hpp \
+	controlers/gameloop.hpp 
 $(OBJDIR)/gameloop.o : $(SRCDIR)/controlers/gameloop.cpp $(addprefix $(SRCDIR)/, $(GAMELOOP_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -62,7 +70,10 @@ $(OBJDIR)/camera.o : $(SRCDIR)/entities/camera.cpp $(addprefix $(SRCDIR)/, $(CAM
 ENTITY_DEPENDS := \
 	entities/entity.hpp \
 	entities/geometry.hpp \
-	renders/renderable.hpp
+	renders/renderable.hpp \
+	renders/mesh.hpp \
+	renders/shader.hpp \
+	utils/matrix.hpp 
 $(OBJDIR)/entity.o : $(SRCDIR)/entities/entity.cpp $(addprefix $(SRCDIR)/, $(ENTITY_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -96,12 +107,12 @@ $(OBJDIR)/matrix.o : $(SRCDIR)/utils/matrix.cpp $(addprefix $(SRCDIR)/, $(MATRIX
 
 
 #builds the libs
-#builds imgui 
-$(OBJDIR)/%.o: $(LIBSDIR)/%.cpp
-	$(CXX) -c -o $@ $^ -I./include/imgui $(INCLUDE)
 #builds glad.c
 $(OBJDIR)/glad.o: $(LIBSDIR)/glad.c
 	$(CXX) -c -o $@ $^ $(INCLUDE)
+#builds imgui 
+$(OBJDIR)/%.o: $(LIBSDIR)/%.cpp
+	$(CXX) -c -o $@ $^ -I./include/imgui $(INCLUDE)
 
 .PHONY: clean run
 clean:
