@@ -14,7 +14,7 @@ namespace entity{
 		float phi, theta, radius;
 	} LookAtParameters;
 	typedef struct RotationAngles{
-		float angleX, angleZ;
+		float angleX, angleY;
 	} RotationAngles;
 	class Camera {
 		public:
@@ -22,7 +22,7 @@ namespace entity{
 			auto update_aspect_ratio(float aspect_ratio) -> void;
 			auto update_position(LookAtParameters &parameters) -> void;
 			auto update_position(entity::PressedKeys &keys, float delta_time) -> void;
-			auto update_view(RotationAngles &angles) -> void;
+			auto update_direction(RotationAngles &angles, float delta_time) -> void;
 			inline auto set_angles(LookAtParameters &parameters) -> void {
 				look_at_parameters.phi = parameters.phi;
 				look_at_parameters.theta = parameters.theta;
@@ -37,7 +37,8 @@ namespace entity{
 			
 			//for free cam
 			glm::vec4 camera_position;
-			float cam_speed;
+			float cam_move_speed;
+			float cam_look_speed;
 
 			//for look_at camera
 			glm::vec4 point_look_at; 

@@ -149,7 +149,7 @@ namespace controler{
 	}
 	auto GameLoop::update_camera(entity::PressedKeys &keys, entity::RotationAngles &angles, float delta_time, float screen_ratio) -> void {
 		camera->update_position(keys, delta_time);
-		camera->update_view(angles);
+		camera->update_direction(angles, delta_time);
 		camera->update_aspect_ratio(screen_ratio);
 	}
 

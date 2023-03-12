@@ -5,14 +5,15 @@ namespace entity{
 	/**************************
 		Camera implementation
 	***************************/
-	Camera::Camera(): point_look_at(glm::vec4(0.0f,0.0f,0.0f,1.0f)),
+	Camera::Camera():
+		point_look_at(glm::vec4(0.0f,0.0f,0.0f,1.0f)),
 		up_vec(glm::vec4(0.0f,1.0f,0.0f,0.0f)),
-		aspect_ratio(1.0f), near_plane(0.1f), far_plane(200.0f), cam_speed(0.2f)
+		aspect_ratio(1.0f), near_plane(0.1f), far_plane(200.0f), 
+		cam_move_speed(0.05f), cam_look_speed(0.25f)
 	{
 		const auto point_c = glm::vec4(0.0f,0.0f,1.0f,1.0f);
 		camera_direction = mtx::normalize(point_look_at - point_c);
 		view = mtx::cam_view(point_c,camera_direction,up_vec);
-
 		projection = mtx::perspective(3.141592f / 3.0f, aspect_ratio, -near_plane,-far_plane);
 	}
 	auto Camera::update_aspect_ratio(float new_aspect_ratio) -> void {
@@ -34,7 +35,7 @@ namespace entity{
 	}
 	auto Camera::update_position(entity::PressedKeys &keys, float delta_time) -> void{
 		float pressed__directions = sum_direction(keys);
-		float distance = TOTAL_DIRECTIONS/pressed__directions * cam_speed * delta_time;
+		float distance = TOTAL_DIRECTIONS/pressed__directions * cam_move_speed * delta_time;
 		
 		if(keys.w){
 			camera_position = camera_position + camera_direction*distance;
@@ -67,22 +68,22 @@ namespace entity{
 		}
 		return count;
 	}
-	auto Camera::update_view(RotationAngles &angles) -> void {
-		if(angles.angleX == 0 && angles.angleZ == 0) return;
+	auto Camera::update_direction(RotationAngles &angles, float delta_time) -> void {
+		if(angles.angleX == 0 && angles.angleY == 0) return;
 
 		// ROTAÇÃO VERTICAL
     	glm::vec4 lado = mtx::cross_prod(up_vec, camera_direction); // Calcula o lado, para rotacionar verticalmente
-    	glm::vec4 aux = camera_direction * mtx::rotate_rodriguez(angles.angleZ, lado);   // Rotação no eixo lado (vertical)
+    	glm::vec4 aux = camera_direction * mtx::rotate_rodriguez(-angles.angleY * cam_look_speed, lado);   // Rotação no eixo lado (vertical)
 
     	// TRAVA DA ROTAÇÃO VERTICAL
-    	if(mtx::dot_prod(lado, mtx::cross_prod(up_vec, aux)) > 0) // Testa se o novo valor de lado é igual ao antigo
+    	if(mtx::dot_prod(lado, mtx::cross_prod(up_vec, aux)) > 0) { // Testa se o novo valor de lado é igual ao antigo
         	camera_direction = aux;                                 // Caso seja, salva o novo camera_view (permite a rotação)
-
+		}
     	// ROTAÇÃO HORIZONTAL
-    	camera_direction = mtx::normalize(camera_direction * mtx::rotate_rodriguez(-angles.angleX, up_vec)); // Rotação no eixo up (horizontal)
+    	camera_direction = mtx::normalize(camera_direction * mtx::rotate_rodriguez(angles.angleX * cam_look_speed, up_vec)); // Rotação no eixo up (horizontal)
 
 		angles.angleX = 0.0f;
-		angles.angleZ = 0.0f;
+		angles.angleY = 0.0f;
 
 		view = mtx::cam_view(camera_position,camera_direction,up_vec);
 	}
