@@ -165,8 +165,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		//set GPU and camera projections
-		camera->update_position(phi,theta,distance);
-		camera->update_aspect_ratio(g_ScreenRatio);
 		gpu_program->use_prog();
 		gpu_program->set_mtx("view",camera->get_view_ptr());
 		gpu_program->set_mtx("projection",camera->get_projection_ptr());
