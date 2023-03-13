@@ -13,7 +13,7 @@ SRCFILES = main.cpp \
 collision.cpp gameloop.cpp \
 camera.cpp entity.cpp geometry.cpp \
 mesh.cpp renderable.cpp shader.cpp \
-matrix.cpp
+matrix.cpp main.cpp
 
 # os objs escritos a serem lincados
 _OBJS := $(patsubst %.cpp,%.o,$(SRCFILES)) #convert to .o

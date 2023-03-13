@@ -28,8 +28,9 @@
 
 #define PI 3.141592f
 #define TARGET_FRAME_RATE 60.0f
+#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
-
 
 void print_exception(const std::exception& e, int level);
 auto player_movement() -> float;
@@ -42,9 +43,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 
 //global values, TODO: organize in a struct
 float g_ScreenRatio = 1.0f;
-float g_CameraPhi = 0.0f, g_CameraTheta = 0.0f;
-float g_LeftMouseButtonPressed;
+entity::LookAtParameters g_look_at_parameters { 0.0f, 0.0f, 8.0f };
+entity::RotationAngles g_angles { 0.0f, 0.0f };
 double g_LastCursorPosX, g_LastCursorPosY;
+bool g_LeftMouseButtonPressed = false;
+bool g_Paused = false;
+
+typedef struct {
+	float width, height;
+} WindowSize;
+WindowSize g_windowSize {WINDOW_WIDTH,WINDOW_HEIGHT};
 
 entity::PressedKeys g_keys{false, false, false, false};
 
@@ -103,7 +111,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	log("inserindo o inimigo");
 	game_controler.insert_enemy(cube);
 
-	float phi = 0.0f, theta = 0.0f, distance = 8.0f;
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
 
@@ -119,21 +126,27 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
 		{
 			ImGui::Begin("Camera Movment");
-            ImGui::SliderFloat("phi", &phi, 0.0f, 3.14f);
-            ImGui::SliderFloat("theta", &theta, 0.0f, 3.14f);
-            ImGui::SliderFloat("distance", &distance, 2.5f, 20.0f);
+            ImGui::SliderFloat("phi", &g_look_at_parameters.phi, 0.0f, 3.14f);
+            ImGui::SliderFloat("theta", &g_look_at_parameters.theta, 0.0f, 3.14f);
+            ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 20.0f);
 			ImGui::Checkbox("render bbox", &render_bbox);
 			ImGui::End();
 		}
 	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
-		game_controler.update_camera(phi,theta,distance,delta_time);
-		game_controler.update_player(delta_time,g_keys);
+		if(!g_Paused){
+			game_controler.update_camera(g_look_at_parameters, g_ScreenRatio);
+			game_controler.update_player(delta_time,g_keys);
+		}
+		else{
+			game_controler.update_camera(g_keys, g_angles, delta_time, g_ScreenRatio);
+		}
+		
 		game_controler.render_frame(gpu_program);
+
 		if(render_bbox){
 			game_controler.render_bbox(wire_renderer);
 		}
@@ -160,7 +173,7 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //usa-se apenas as funções modernas de OpenGL(perfil "core").
     //cria uma janela 800x800
-    GLFWwindow* window = glfwCreateWindow(800, 800, "INF01047 - 00333916 - Pedro Henrique Boniatti Colle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "INF01047 - 00333916 - Pedro Henrique Boniatti Colle / 00334087 - Eduardo Dalmás Faé", NULL, NULL);
     if (!window){
         glfwTerminate();
        	std::cerr << "ERROR: glfwCreateWindow() failed.\n" << std::endl;
@@ -168,7 +181,7 @@ int main(int argc, char** argv)
     }
     //callback para o resize da janela, em q se deve realocar a memoria
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    glfwSetWindowSize(window, 800, 800); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    glfwSetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
 
     glfwSetMouseButtonCallback(window, MouseButtonCallback); //botao do mouse
     glfwSetCursorPosCallback(window, CursorPosCallback); //movimentar o cursor
@@ -180,7 +193,6 @@ int main(int argc, char** argv)
         glfwTerminate();
        	std::cerr << "ERROR: gladLoadGLLoader() failed.\n" << std::endl;
         std::exit(EXIT_FAILURE);
-
 	}
 
 	IMGUI_CHECKVERSION();
@@ -205,7 +217,6 @@ int main(int argc, char** argv)
     glfwTerminate();
     return 0;
 }
-
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
@@ -218,28 +229,18 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     }
 }
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
-    if (!g_LeftMouseButtonPressed)
-        return;
-
     float dx = xpos - g_LastCursorPosX;
     float dy = ypos - g_LastCursorPosY;
-
-    g_CameraTheta -= 0.01f*dx;
-    g_CameraPhi   -= 0.01f*dy;
-
-    float phimax = PI/2;
-    float phimin = -phimax;
-
-    if (g_CameraPhi > phimax)
-        g_CameraPhi = phimax;
-
-    if (g_CameraPhi < phimin)
-        g_CameraPhi = phimin;
 
     // Atualizamos as variáveis globais para armazenar a posição atual do
     // cursor como sendo a última posição conhecida do cursor.
     g_LastCursorPosX = xpos;
     g_LastCursorPosY = ypos;
+
+	if(!g_Paused) return;
+	
+    g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
+    g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
 }
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
@@ -271,59 +272,22 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	if(key == GLFW_KEY_A && action == GLFW_RELEASE){
 		g_keys.a = false;
 	}
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
-/*
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-    }
-
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
-    }
-*/
+	if(key == GLFW_KEY_P && action == GLFW_PRESS){
+		g_Paused = !g_Paused;
+		if(g_Paused)
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
 }
 //Função para a redimensão da janela
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_ScreenRatio = (float)width / height;
+
+	g_windowSize.width  = width;  // Salva a largura da tela
+    g_windowSize.height = height; // Salva a altura  da tela
 }
 // Definimos o callback para impressão de erros da GLFW no terminal
 void ErrorCallback(int error, const char* description)

@@ -23,7 +23,8 @@ namespace controler{
 		auto render_bbox(std::shared_ptr<render::GPUprogram> program) -> void;
 		auto update_player(float delta_time, entity::PressedKeys keys) -> void;
 		auto update_enemies(float delta_time) -> void;
-		auto update_camera(float phi, float theta, float distance, float delta_time) -> void;
+		auto update_camera(entity::LookAtParameters &parameters, float screen_ratio) -> void;
+		auto update_camera(entity::PressedKeys &keys, entity::RotationAngles &angles, float delta_time, float screen_ratio) -> void;
 
 		auto insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto insert_wall(std::shared_ptr<entity::Wall> wall) -> void;
@@ -35,7 +36,6 @@ namespace controler{
 
 		inline auto set_draw_bbox(bool cond) -> void { draw_bbox = cond; }
 	private:
-
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;
 		

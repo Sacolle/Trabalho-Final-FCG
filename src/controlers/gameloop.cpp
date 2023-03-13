@@ -10,7 +10,24 @@ namespace controler{
 	} 
 
 	GameLoop::~GameLoop(){}
-
+	//TODO: return a gameover so that it can change screens 
+	/*auto GameLoop::next_frame(entity::PressedKeys &keys, entity::RotationAngles &angles, entity::LookAtParameters &parameters, float delta_time, float screen_ratio, bool paused) -> void {
+		if(paused){
+			update_camera(keys, angles, delta_time, screen_ratio);
+		}
+		else {
+			update_player(delta_time, keys);
+			update_enemies(delta_time);
+			update_camera(parameters, screen_ratio);
+		}
+		
+	
+		render_frame();
+		if(draw_bbox){
+			render_bbox(); 
+		}
+	}
+	*/
 	auto GameLoop::insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void {
 		enemies.insert(enemy);
 		collision_map->insert_mover(enemy);
@@ -126,8 +143,14 @@ namespace controler{
 			collision_map->insert_mover(enemy);
 		}
 	}
-	auto GameLoop::update_camera(float phi, float theta, float distance, float delta_time) -> void {
-		camera->update_position(phi,theta,distance);
+	auto GameLoop::update_camera(entity::LookAtParameters &parameters, float screen_ratio) -> void {
+		camera->update_position(parameters);
+		camera->update_aspect_ratio(screen_ratio);
+	}
+	auto GameLoop::update_camera(entity::PressedKeys &keys, entity::RotationAngles &angles, float delta_time, float screen_ratio) -> void {
+		camera->update_position(keys, delta_time);
+		camera->update_direction(angles, delta_time);
+		camera->update_aspect_ratio(screen_ratio);
 	}
 
 }

@@ -91,22 +91,25 @@ namespace mtx{
 
 		return sqrt( vx*vx + vy*vy + vz*vz );
 	}
+	auto normalize(glm::vec4 vec) -> glm::vec4 {
+		return vec/norm(vec);
+	}
 	auto rotate_rodriguez(float angle, glm::vec4 axis) -> glm::mat4 {
 		float c = cos(angle);
-		float s = sin(angle);
+    	float s = sin(angle);
 
-		glm::vec4 v = axis / norm(axis);
+    	glm::vec4 v = normalize(axis);
 
-		float vx = v.x;
-		float vy = v.y;
-		float vz = v.z;
+    	float vx = v.x;
+    	float vy = v.y;
+    	float vz = v.z;
 
-		return matrix(
-			vx*vx*(1.0f - c) + c    , vx*vy*(1.0f - c) + vz*s , vx*vz*(1.0f - c) + vy*s , 0.0f ,  // LINHA 1
-			vx*vy*(1.0f - c) + vz*s , vy*vy*(1.0f - c) + c    , vy*vz*(1.0f - c) + vx*s , 0.0f ,  // LINHA 2
-			vx*vz*(1.0f - c) + vy*s , vy*vz*(1.0f - c) + vx*s , vz*vz*(1.0f - c) + c    , 0.0f ,  // LINHA 3
-			0.0f                    , 0.0f   	              , 0.0f                 	, 1.0f    // LINHA 4
-		);
+    	return matrix(
+        	vx*vx*(1-c) + c    , vx*vy*(1-c) - vz*s , vx*vz*(1-c) + vy*s , 0.0f ,  // LINHA 1
+        	vx*vy*(1-c) + vz*s , vy*vy*(1-c) + c    , vy*vz*(1-c) - vx*s , 0.0f ,  // LINHA 2
+        	vx*vz*(1-c) - vy*s , vy*vz*(1-c) + vx*s , vz*vz*(1-c) + c    , 0.0f ,  // LINHA 3
+        	      0.0f         ,       0.0f         ,       0.0f         , 1.0f    // LINHA 4
+    	);
 	}
 	auto cross_prod(glm::vec4 u, glm::vec4 v) -> glm::vec4 {
 		float u1 = u.x;

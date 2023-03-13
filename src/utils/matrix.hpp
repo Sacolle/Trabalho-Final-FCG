@@ -12,7 +12,8 @@ namespace mtx{
 	auto rot_z(float angle) -> glm::mat4;
 	auto norm(glm::vec4 v) -> float;
 	auto norm(glm::vec3 v) -> float;
-	auto rotate_rodriguez(float angle, glm::mat4 axis) -> glm::mat4;
+	auto normalize(glm::vec4 vec) -> glm::vec4;
+	auto rotate_rodriguez(float angle, glm::vec4 axis) -> glm::mat4;
 	auto cross_prod(glm::vec4 u, glm::vec4 v) -> glm::vec4;
 	//throws errors
 	auto dot_prod(glm::vec4 u, glm::vec4 v) -> float;
