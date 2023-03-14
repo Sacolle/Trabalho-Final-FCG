@@ -2,7 +2,7 @@
 #include "entity.hpp"
 
 #include <cmath>
-
+#include <iostream>
 
 namespace entity{
 	//calculate the normal of the colision and go a little back
@@ -19,11 +19,15 @@ namespace entity{
 	//set direction to player  
 	auto Enemy::direct_towards_player(std::shared_ptr<Player> player) -> void {
 		//if(distan)
-		const auto player_dir = player->get_cords() - get_cords();
-		const auto normalized_player_dir = player_dir/mtx::norm(player_dir);
+		const float pi = 3.141592f;
 
-		const auto angle = acosf(mtx::dot_prod(get_base_direction(),normalized_player_dir));
-		set_y_angle(angle);
+		const auto player_dir = player->get_cords() - get_cords();
+		const auto base_dir = get_base_direction();
+
+		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(player_dir.z, player_dir.x);
+		std::cout << angle << std::endl;
+		//const auto fixed_angle = normalized_player_dir.x < 0 ? angle * -1 : angle;
+		set_y_angle(angle < 0 ? angle + 2*pi : angle);
 	}
 
 	auto Enemy::set_damage(int amount) -> void {
@@ -58,31 +62,30 @@ namespace entity{
 		return true;
 	}
 	auto Player::player_angle_from_keys(PressedKeys &keys) -> float {
-		const float pi = 3.141592f;
-		float components = 0;
-		float angle = 0;
+		//TODO: o angulo de rotação precisa se basear na direção base do player
+		//e na direção da camera ou na direção global
+		glm::vec4 result(0.0f,0.0f,0.0f,0.0f);
 		if(keys.w){
-			angle += pi/2;
-			components++;
+			result[2]--;
 		}
 		if(keys.a){
-			angle += pi;
-			components++;
+			result[0]--;
 		}
 		if(keys.s){
-			angle += pi + pi/2;
-			components++;
+			result[2]++;
 		}
 		if(keys.d){
-			if(angle >= pi){
-				angle += pi + pi;
-			}else{
-				angle += 0;
-			}
-			components++;
+			result[0]++;
 		}
-		if(components == 0) return -1;
-		return angle/components;
+		if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
+
+		const float pi = 3.141592f;
+		const auto base_dir = get_base_direction();
+		//como gerar o angulo baseado nos vetores de 0 a 2pi
+		//https://math.stackexchange.com/a/2234559
+		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
+
+		return angle < 0 ? angle + 2*pi : angle;
 	}
 	auto Player::take_damage(int amount) -> void {
 		life_points -= amount;

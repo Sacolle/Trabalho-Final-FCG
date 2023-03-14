@@ -139,7 +139,7 @@ namespace render{
 					texture_cords.push_back(glm::vec2(0,0));
 				}
 			}
-			if(material_id > materials.size()){
+			if(material_id > mats.size()){
 				std::throw_with_nested(std::runtime_error("Material not Found, id: " + std::to_string(material_id)));
 			}
 			material_draw_ranges.emplace(material_id, std::make_pair(start_idx, indices.size()));

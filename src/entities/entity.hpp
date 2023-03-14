@@ -113,8 +113,8 @@ namespace entity{
 			Wall(glm::vec4 cords, 
 				std::shared_ptr<render::GPUprogram> gpu_program,
 				std::shared_ptr<render::Mesh> mesh): Entity(cords, gpu_program, mesh){} 
-			Wall();
-			virtual ~Wall();
+			Wall(){}
+			virtual ~Wall(){}
 
 			virtual auto collide(std::shared_ptr<Enemy> enemy, float delta_time) -> GameEventTypes override;
 			virtual auto collide(std::shared_ptr<Player> player, float delta_time) -> GameEventTypes override;
@@ -122,13 +122,15 @@ namespace entity{
 
 	class GameEvent : public Entity {
 		public:
-			GameEvent(glm::vec4 cords, 
+			GameEvent(GameEventTypes type,
+				glm::vec4 cords, 
 				std::shared_ptr<render::GPUprogram> gpu_program,
-				std::shared_ptr<render::Mesh> mesh): Entity(cords, gpu_program, mesh){} 
-			GameEvent();
-			virtual ~GameEvent();
-			
+				std::shared_ptr<render::Mesh> mesh): type(type), Entity(cords, gpu_program, mesh){} 
+			GameEvent(){}
+			virtual ~GameEvent(){}
+		
 			inline auto get_type() -> GameEventTypes { return type; }
+			//inline auto set_type(GameEventTypes new_type) -> void { type = new_type; }
 
 			virtual auto collide(std::shared_ptr<Player> player, float delta_time) -> GameEventTypes override;
 		private:
