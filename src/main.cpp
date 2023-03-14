@@ -45,7 +45,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 float g_ScreenRatio = 1.0f;
 entity::LookAtParameters g_look_at_parameters { 0.0f, 0.0f, 8.0f };
 entity::RotationAngles g_angles { 0.0f, 0.0f };
-controler::CursorState g_cursor { 0, 0, false};
+double g_LastCursorPosX, g_LastCursorPosY;
+bool g_LeftMouseButtonPressed = false;
 bool g_Paused = false;
 
 typedef struct {
@@ -72,7 +73,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	//render::ParsedObjMesh teapot_load_mesh;
 	render::ParsedObjMesh cube_load_mesh;
 	render::ParsedObjMesh pawn_load_mesh;
- 
+
 	//std::shared_ptr<render::Mesh> teapot_mesh;
 	std::shared_ptr<render::Mesh> cube_mesh;
 	std::shared_ptr<render::Mesh> pawn_mesh;
@@ -96,41 +97,21 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	pawn->set_wire_renderer(wire_renderer);
 	pawn->set_bbox_type(entity::BBoxType::Cylinder);
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
+	pawn->set_base_direction(glm::vec4(-1.0f,0.0f,0.0f,0.0f));
 	pawn->set_speed(0.05f);
-	
-	
-	std::shared_ptr<entity::Wall> wall(new entity::Wall(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
-	wall->set_wire_mesh(cube_wire_mesh);
-	wall->set_wire_renderer(wire_renderer);
-
-	std::shared_ptr<entity::GameEvent> coin(new entity::GameEvent(entity::GameEventTypes::Point, glm::vec4(-2,0,0.1f,1),gpu_program, cube_mesh));
-	coin->set_wire_mesh(cube_wire_mesh);
-	coin->set_wire_renderer(wire_renderer);
-	coin->set_scale(0.5f,0.5f,0.5f);
-	coin->set_bbox_size(0.5f,0.5f,0.5f);
-
-	std::shared_ptr<entity::Enemy> enemy(new entity::Enemy(glm::vec4(-10,0,0.1f,1),gpu_program, pawn_mesh));
-	enemy->set_wire_mesh(cylinder_wire_mesh);
-	enemy->set_wire_renderer(wire_renderer);
-	enemy->set_scale(0.5f,0.5f,0.5f);
-	enemy->set_bbox_size(0.8f,0.8f,0.8f);
-	enemy->set_speed(0.025f);
+	std::shared_ptr<entity::Enemy> cube(new entity::Enemy(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
+	cube->set_wire_mesh(cube_wire_mesh);
+	cube->set_wire_renderer(wire_renderer);
 
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
 		std::unique_ptr<entity::Camera>(new entity::Camera()),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
-		pawn,
-		gpu_program, wire_renderer,
-		&g_keys, &g_look_at_parameters,
-		&g_angles, &g_cursor,
-		&g_ScreenRatio, &g_Paused);
-
+		pawn
+	);
 	log("inserindo o inimigo");
-	game_controler.insert_wall(wall);
-	game_controler.insert_game_event(coin);
-	game_controler.insert_enemy(enemy);
+	game_controler.insert_enemy(cube);
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
@@ -157,10 +138,23 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		}
 	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
+
+		if(!g_Paused){
+			game_controler.update_camera(g_look_at_parameters, g_ScreenRatio);
+			game_controler.update_player(delta_time,g_keys);
+		}
+		else{
+			game_controler.update_camera(g_keys, g_angles, delta_time, g_ScreenRatio);
+		}
 		
-		game_controler.update(delta_time);
+		game_controler.render_frame(gpu_program);
+
+		if(render_bbox){
+			game_controler.render_bbox(wire_renderer);
+		}
   
 		ImGui::Render();
+
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
@@ -228,22 +222,22 @@ int main(int argc, char** argv)
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        glfwGetCursorPos(window, &g_cursor.x, &g_cursor.y);
-        g_cursor.clicked = true;
+        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
+        g_LeftMouseButtonPressed = true;
     }
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
     {
-        g_cursor.clicked = false;
+        g_LeftMouseButtonPressed = false;
     }
 }
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
-    float dx = xpos - g_cursor.x;
-    float dy = ypos - g_cursor.y;
+    float dx = xpos - g_LastCursorPosX;
+    float dy = ypos - g_LastCursorPosY;
 
     // Atualizamos as variáveis globais para armazenar a posição atual do
     // cursor como sendo a última posição conhecida do cursor.
-    g_cursor.x = xpos;
-    g_cursor.y = ypos;
+    g_LastCursorPosX = xpos;
+    g_LastCursorPosY = ypos;
 
 	if(!g_Paused) return;
 	

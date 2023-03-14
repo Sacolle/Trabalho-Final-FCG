@@ -47,7 +47,6 @@ namespace entity{
 			float near_plane;
 			float far_plane;
 
-
 			glm::mat4 projection;
 			glm::mat4 view;
 
