@@ -89,7 +89,6 @@ namespace render{
 			std::throw_with_nested(std::runtime_error("failed to generate shaders at GPU compile level"));
 		}
 
-
 		id = glCreateProgram();
 		glAttachShader(id, vertex_shader->get_shader_id());
 		glAttachShader(id, fragment_shader->get_shader_id());
@@ -113,9 +112,9 @@ namespace render{
 		GLint model_uniform = get_position(atrib);
 		glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , value);
 	}
-	auto GPUprogram::set_vec3(const char* atrib, const GLfloat *value) -> void{
+	auto GPUprogram::set_3floats(const char* atrib, const GLfloat f1, const GLfloat f2, const GLfloat f3) -> void{
 		GLint model_uniform = get_position(atrib);
-		glUniform3fv(model_uniform, 3, value);
+		glUniform3f(model_uniform, f1, f2, f3);
 	}
 	auto GPUprogram::set_float(const char* atrib, const GLfloat value) -> void{
 		GLint model_uniform = get_position(atrib);
