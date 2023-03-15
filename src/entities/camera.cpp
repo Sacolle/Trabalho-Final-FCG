@@ -5,8 +5,8 @@ namespace entity{
 	/**************************
 		Camera implementation
 	***************************/
-	Camera::Camera():
-		point_look_at(glm::vec4(0.0f,0.0f,0.0f,1.0f)),
+	Camera::Camera(glm::vec4 look_at):
+		point_look_at(look_at),
 		up_vec(glm::vec4(0.0f,1.0f,0.0f,0.0f)),
 		aspect_ratio(1.0f), near_plane(0.1f), far_plane(200.0f), 
 		cam_move_speed(0.05f), cam_look_speed(0.25f)
@@ -23,12 +23,13 @@ namespace entity{
 			aspect_ratio = new_aspect_ratio;
 		}
 	}
-	auto Camera::update_position(LookAtParameters &parameters) -> void{
+	auto Camera::update_position(LookAtParameters &parameters, glm::vec4 new_look_at) -> void{
         float y = parameters.radius*sin(parameters.phi);
         float z = parameters.radius*cos(parameters.phi)*cos(parameters.theta);
         float x = parameters.radius*cos(parameters.phi)*sin(parameters.theta);
 
-		camera_position = glm::vec4(x,y,z,1.0f);
+		point_look_at = new_look_at;
+		camera_position = point_look_at + glm::vec4(x,y,z,0.0f);
 		camera_direction = mtx::normalize(point_look_at - camera_position);
 
 		view = mtx::cam_view(camera_position,camera_direction,up_vec);

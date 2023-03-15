@@ -22,28 +22,25 @@ Roadmap de Implementação:
 - [x] Implementação da estrutura de Entidades em Classes.
 - [x] Implementação dos controles do player.
 	- [x] Implemeção da movimentação.
-	- [x] Decouple do movimento do player (e Entidades) da Framerate.
+	- [ ] Decouple do movimento do player (e Entidades) da Framerate.
 	- [ ] Implemeção do pulo.
-	- [x] Implemeção de interações com o cenário e inimigos.
-	- [x] Implementação da interação Player-Camera.
+	- [ ] Implemeção de interações com o cenário e inimigos.
+	- [ ] Implementação da interação Player-Camera.
 - [x] Implementação da colisão de Entidades.
 	- [x] Implementação das Bounding Boxes.
 	- [x] Implementação dos Wire Frames para mostrar as Bounding Boxes.
 	- [x] Implementação das Funções de Colisão.
 	- [x] Implementação de um alritmo de Spacial Hash para gerir as colisões.
-- [x] Implementação do Game Loop.
+- [ ] Implementação do Game Loop.
 	- [ ] Spawn de Inimigos.
 	- [ ] Path finding dos zumbis usando o algoritmo A*.
 	- [ ] Movimentação de alguma Entidade usando uma curva de Bezier.
 - [ ] Implementação da geração de Terreno automático usando o algoritmo de *Wave Funcion Colapse*.
 - [ ] Implementação do Menu e Tela de Pause
-	- [ ] Implementação das Telas dentro do gameloop
-	- [ ] Implementação do render das telas
-	- [x] Implementação do pause
 - [ ] Implementação do Som e Música.
 - [ ] Implementação do Sistema de Iluminção.
-	- [x] Modelo difusa (Lamber).
-	- [ ] Modelo Blinn-Phong. 
+	- [ ] Modelo difusa (Lamber).
+	- [ ] Modelo Blinn-Phong.
 	- [ ] Interpolação de Iluminação.
 		- [ ] Modelo de Gouraud.
 		- [ ] Modelo de Phong.

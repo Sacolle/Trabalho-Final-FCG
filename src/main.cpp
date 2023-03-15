@@ -97,7 +97,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	pawn->set_wire_renderer(wire_renderer);
 	pawn->set_bbox_type(entity::BBoxType::Cylinder);
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
-	pawn->set_base_direction(glm::vec4(-1.0f,0.0f,0.0f,0.0f));
+	pawn->set_base_direction(glm::vec4(0.0f,0.0f,-1.0f,0.0f));
 	pawn->set_speed(0.05f);
 	std::shared_ptr<entity::Enemy> cube(new entity::Enemy(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
 	cube->set_wire_mesh(cube_wire_mesh);
@@ -106,7 +106,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
-		std::unique_ptr<entity::Camera>(new entity::Camera()),
+		std::unique_ptr<entity::Camera>(new entity::Camera(pawn->get_cords())),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
 		pawn
 	);
@@ -140,8 +140,8 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		if(!g_Paused){
-			game_controler.update_camera(g_look_at_parameters, g_ScreenRatio);
 			game_controler.update_player(delta_time,g_keys);
+			game_controler.update_camera(g_look_at_parameters, pawn->get_cords(), g_ScreenRatio);
 		}
 		else{
 			game_controler.update_camera(g_keys, g_angles, delta_time, g_ScreenRatio);

@@ -143,8 +143,8 @@ namespace controler{
 			collision_map->insert_mover(enemy);
 		}
 	}
-	auto GameLoop::update_camera(entity::LookAtParameters &parameters, float screen_ratio) -> void {
-		camera->update_position(parameters);
+	auto GameLoop::update_camera(entity::LookAtParameters &parameters, glm::vec4 point_look_at, float screen_ratio) -> void {
+		camera->update_position(parameters, point_look_at);
 		camera->update_aspect_ratio(screen_ratio);
 	}
 	auto GameLoop::update_camera(entity::PressedKeys &keys, entity::RotationAngles &angles, float delta_time, float screen_ratio) -> void {

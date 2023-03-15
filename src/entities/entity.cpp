@@ -58,32 +58,29 @@ namespace entity{
 		return true;
 	}
 	auto Player::player_angle_from_keys(PressedKeys &keys) -> float {
-		const float pi = 3.141592f;
-		float components = 0;
-		float angle = 0;
-		if(keys.w){
-			angle += pi/2;
-			components++;
-		}
-		if(keys.a){
-			angle += pi;
-			components++;
-		}
-		if(keys.s){
-			angle += pi + pi/2;
-			components++;
-		}
-		if(keys.d){
-			if(angle >= pi){
-				angle += pi + pi;
-			}else{
-				angle += 0;
-			}
-			components++;
-		}
-		if(components == 0) return -1;
-		return angle/components;
-	}
+        //TODO: o angulo de rotação precisa se basear na direção base do player
+        //e na direção da camera ou na direção global
+        glm::vec4 result(0.0f,0.0f,0.0f,0.0f);
+        if(keys.w){
+            result[2]--;
+        }
+        if(keys.a){
+            result[0]--;
+        }
+        if(keys.s){
+            result[2]++;
+        }
+        if(keys.d){
+            result[0]++;
+        }
+        if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
+
+        const float pi = 3.141592f;
+        const auto base_dir = get_base_direction();
+        const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
+
+        return angle < 0 ? angle + 2*pi : angle;
+    }
 	auto Player::take_damage(int amount) -> void {
 		life_points -= amount;
 	}
