@@ -133,6 +133,7 @@ namespace entity{
 			//inline auto set_type(GameEventTypes new_type) -> void { type = new_type; }
 
 			virtual auto collide(std::shared_ptr<Player> player, float delta_time) -> GameEventTypes override;
+			virtual auto collide(std::shared_ptr<Enemy> enemy, float delta_time) -> GameEventTypes override;
 		private:
 			GameEventTypes type;
 

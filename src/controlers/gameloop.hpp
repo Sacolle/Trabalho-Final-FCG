@@ -64,6 +64,7 @@ namespace controler{
 		
 		/*changes the game state based on the game event*/
 		auto handle_event(entity::GameEventTypes game_event_type, std::shared_ptr<entity::GameEvent> game_event) -> void;
+		auto is_game_event_event(entity::GameEventTypes game_event_type) -> bool;
 
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;

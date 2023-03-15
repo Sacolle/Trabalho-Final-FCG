@@ -86,6 +86,19 @@ namespace controler{
 			break;
 		}
 	}
+	auto GameLoop::is_game_event_event(entity::GameEventTypes game_event_type) -> bool {
+		switch (game_event_type) {
+		case entity::GameEventTypes::Point:
+			return true;
+			break;
+		case entity::GameEventTypes::EndPoint:
+			return true;
+			break;
+		default:
+			return false;
+			break;
+		}
+	}
 	auto GameLoop::insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void {
 		enemies.insert(enemy);
 		collision_map->insert_mover(enemy);
@@ -163,13 +176,11 @@ namespace controler{
 				player->translate_direction(player_dx, delta_time);
 			}else{
 				const auto resulting_event = collided_with_dx->collide(player, delta_time);
-				if(resulting_event != entity::GameEventTypes::None){
-					if(resulting_event == entity::GameEventTypes::GameOver){
-						return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
-					}
-					//std::cout << "collided with GameEvent" << std::endl;
+				if(is_game_event_event(resulting_event)){
 					return std::make_pair(resulting_event, std::dynamic_pointer_cast<entity::GameEvent>(collided_with_dx));
-				}
+				}else if(resulting_event == entity::GameEventTypes::GameOver){
+					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
+				} 
 			}
 			const auto player_dz = player->get_parcial_direction_z();
 			const auto collided_with_dz = collision_map->colide_direction(player,player_dz);
@@ -177,13 +188,11 @@ namespace controler{
 				player->translate_direction(player_dz, delta_time);
 			}else{
 				const auto resulting_event = collided_with_dz->collide(player, delta_time);
-				if(resulting_event != entity::GameEventTypes::None){
-					if(resulting_event == entity::GameEventTypes::GameOver){
-						return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
-					}
-					//std::cout << "collided with GameEvent" << std::endl;
+				if(is_game_event_event(resulting_event)){
 					return std::make_pair(resulting_event, std::dynamic_pointer_cast<entity::GameEvent>(collided_with_dz));
-				}
+				}else if(resulting_event == entity::GameEventTypes::GameOver){
+					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
+				} 
 			}
 			collision_map->insert_mover(player);
 		}
@@ -202,9 +211,11 @@ namespace controler{
 				enemy->translate_direction(enemy_dx, delta_time);
 			}else{
 				const auto resulting_state = collided_with_dx->collide(enemy, delta_time);
-				if(resulting_state == entity::GameEventTypes::GameOver){
-					return resulting_state;
-				}
+				if(is_game_event_event(resulting_state)){
+					enemy->translate_direction(enemy_dx, delta_time);
+				}else if(resulting_state == entity::GameEventTypes::GameOver){
+					return entity::GameEventTypes::GameOver;
+				} 
 			}
 
 			const auto enemy_dz = enemy->get_parcial_direction_z();
@@ -213,9 +224,12 @@ namespace controler{
 				enemy->translate_direction(enemy_dz, delta_time);
 			}else{
 				const auto resulting_state = collided_with_dz->collide(enemy, delta_time);
-				if(resulting_state == entity::GameEventTypes::GameOver){
-					return resulting_state;
-				}
+				if(is_game_event_event(resulting_state)){
+					//enemies goes rightthrow gameEvents
+					enemy->translate_direction(enemy_dz, delta_time);
+				}else if(resulting_state == entity::GameEventTypes::GameOver){
+					return entity::GameEventTypes::GameOver;
+				} 
 			}
 
 			collision_map->insert_mover(enemy);
