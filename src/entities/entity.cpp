@@ -1,8 +1,7 @@
-
 #include "entity.hpp"
 
 #include <cmath>
-
+#include <iostream>
 
 namespace entity{
 	//calculate the normal of the colision and go a little back
@@ -10,7 +9,6 @@ namespace entity{
 		const auto collision_normal = other->get_cords() - me->get_cords();
 		other->translate_direction(collision_normal/mtx::norm(collision_normal), delta_time);
 	}
-
 	/*
 	 * Enemy implementation 
 	*/
@@ -19,11 +17,14 @@ namespace entity{
 	//set direction to player  
 	auto Enemy::direct_towards_player(std::shared_ptr<Player> player) -> void {
 		//if(distan)
-		const auto player_dir = player->get_cords() - get_cords();
-		const auto normalized_player_dir = player_dir/mtx::norm(player_dir);
+		const float pi = 3.141592f;
 
-		const auto angle = acosf(mtx::dot_prod(get_base_direction(),normalized_player_dir));
-		set_y_angle(angle);
+		const auto player_dir = player->get_cords() - get_cords();
+		const auto base_dir = get_base_direction();
+
+		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(player_dir.z, player_dir.x);
+		//const auto fixed_angle = normalized_player_dir.x < 0 ? angle * -1 : angle;
+		set_y_angle(angle < 0 ? angle + 2*pi : angle);
 	}
 
 	auto Enemy::set_damage(int amount) -> void {
@@ -49,7 +50,6 @@ namespace entity{
 	/*
 	 * Player implementation 
 	*/
-
 	auto Player::direct_player(PressedKeys &keys) -> bool {
 		const float angle = player_angle_from_keys(keys);
 		if(angle == -1)
@@ -58,29 +58,31 @@ namespace entity{
 		return true;
 	}
 	auto Player::player_angle_from_keys(PressedKeys &keys) -> float {
-        //TODO: o angulo de rotação precisa se basear na direção base do player
-        //e na direção da camera ou na direção global
-        glm::vec4 result(0.0f,0.0f,0.0f,0.0f);
-        if(keys.w){
-            result[2]--;
-        }
-        if(keys.a){
-            result[0]--;
-        }
-        if(keys.s){
-            result[2]++;
-        }
-        if(keys.d){
-            result[0]++;
-        }
-        if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
+		//TODO: o angulo de rotação precisa se basear na direção base do player
+		//e na direção da camera ou na direção global
+		glm::vec4 result(0.0f,0.0f,0.0f,0.0f);
+		if(keys.w){
+			result[2]--;
+		}
+		if(keys.a){
+			result[0]--;
+		}
+		if(keys.s){
+			result[2]++;
+		}
+		if(keys.d){
+			result[0]++;
+		}
+		if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
 
-        const float pi = 3.141592f;
-        const auto base_dir = get_base_direction();
-        const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
+		const float pi = 3.141592f;
+		const auto base_dir = get_base_direction();
+		//como gerar o angulo baseado nos vetores de 0 a 2pi
+		//https://math.stackexchange.com/a/2234559
+		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
 
-        return angle < 0 ? angle + 2*pi : angle;
-    }
+		return angle < 0 ? angle + 2*pi : angle;
+	}
 	auto Player::take_damage(int amount) -> void {
 		life_points -= amount;
 	}
@@ -107,7 +109,6 @@ namespace entity{
 	auto Player::collide(std::shared_ptr<GameEvent> game_event, float delta_time) -> GameEventTypes {
 		return game_event->get_type();
 	}*/
-
 	auto Wall::collide(std::shared_ptr<Enemy> enemy, float delta_time) -> GameEventTypes {
 		cause_knock_back(this, enemy, delta_time);
 		return GameEventTypes::None;
@@ -120,5 +121,3 @@ namespace entity{
 		return type;
 	}
 }
-
-
