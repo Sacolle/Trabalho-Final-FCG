@@ -38,7 +38,8 @@ MAIN_DEPENDS := \
 	renders/shader.hpp \
 	renders/mesh.hpp \
 	utils/matrix.hpp \
-	entities/geometry.hpp \
+	entities/camera.hpp \
+	controlers/gameloop.hpp \
 	controlers/collision.hpp
 $(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(addprefix $(SRCDIR)/, $(MAIN_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
@@ -56,7 +57,7 @@ GAMELOOP_DEPENDS := \
 	entities/camera.hpp \
 	renders/shader.hpp \
 	controlers/collision.hpp \
-	controlers/gameloop.hpp 
+	utils/matrix.hpp
 $(OBJDIR)/gameloop.o : $(SRCDIR)/controlers/gameloop.cpp $(addprefix $(SRCDIR)/, $(GAMELOOP_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -84,7 +85,9 @@ $(OBJDIR)/geometry.o : $(SRCDIR)/entities/geometry.cpp $(addprefix $(SRCDIR)/,$(
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 #renders
-MESH_DEPENDS := renders/mesh.hpp
+MESH_DEPENDS := \
+	renders/mesh.hpp \
+	renders/shader.hpp
 $(OBJDIR)/mesh.o : $(SRCDIR)/renders/mesh.cpp $(addprefix $(SRCDIR)/, $(MESH_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -116,6 +119,6 @@ $(OBJDIR)/%.o: $(LIBSDIR)/%.cpp
 
 .PHONY: clean run
 clean:
-	rm -f src/obj/*.o
+	rm -f $(OBJDIR)/*.o
 run: ./bin/main
 	./bin/main src/shaders/model_vertex.glsl src/shaders/model_fragment.glsl

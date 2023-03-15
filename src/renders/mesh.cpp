@@ -55,10 +55,11 @@ namespace render{
 			if (!material.diffuse_texname.empty() && texture_ids.count(material.diffuse_texname)) {
 				const auto texture = texture_ids[material.diffuse_texname];
 
-				glActiveTexture(GL_TEXTURE0);
+				//glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, texture);
 
 				shader->set_bool("using_texture", true);
+				//std::cout << "using texture" << std::endl;
 			} else {
 				shader->set_bool("using_texture", false);
 			}
@@ -151,6 +152,7 @@ namespace render{
 
 			//load texture if it has a name and if it was not loadded before
 			const auto &mat_texture_name = mats.at(material_id).diffuse_texname;
+			//std::cout << "texture name " << mat_texture_name << std::endl;
 			if(!mat_texture_name.empty() && (textures.count(mat_texture_name) == 0)){
 				ParsedTextures texture;
 				try{
@@ -244,6 +246,15 @@ namespace render{
 		return std::shared_ptr<Mesh>(new Mesh(vao_id, buffer_ids, texture_ids, materials, material_draw_ranges));
 	}
 
+	auto ParsedObjMesh::log_parsed_textures() -> void {
+		for(const auto &pair: textures){
+			const auto &name = pair.first;
+			const auto &parse_texture = pair.second;
+			std::cout << "texture name: " << name << '\n';
+			parse_texture.log_data();
+		}
+	}
+
 
 	ParsedTextures::~ParsedTextures(){
 		stbi_image_free(data);
@@ -268,16 +279,29 @@ namespace render{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		// set texture filtering parameters
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		//glActiveTexture(GL_TEXTURE0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		//unbind
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+
 		return texture_id;
+	}
+
+	auto ParsedTextures::log_data() const -> void {
+		std::cout << "width: " << width << '\n';
+		std::cout << "height: " << height << '\n';
+		std::cout << "channels: " << channels << '\n';
+		if(data == nullptr){
+			std::cout << "data: NULL" << std::endl;
+		}else{
+			std::cout << "data: something" << std::endl;
+		}
 	}
 
 	/*****************************

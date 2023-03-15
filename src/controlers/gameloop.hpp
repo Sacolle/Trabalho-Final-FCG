@@ -44,9 +44,12 @@ namespace controler{
 		auto insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto insert_wall(std::shared_ptr<entity::Wall> wall) -> void;
 		auto insert_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void;
+		auto insert_background(std::shared_ptr<entity::Entity> bg) -> void;
+		
 		auto remove_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto remove_wall(std::shared_ptr<entity::Wall> wall) -> void;
 		auto remove_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void;
+		auto remove_background(std::shared_ptr<entity::Entity> bg) -> void;
 
 		inline auto set_draw_bbox(bool cond) -> void { draw_bbox = cond; }
 	private:
@@ -71,6 +74,7 @@ namespace controler{
 		std::unordered_set<std::shared_ptr<entity::Enemy>> enemies;
 		std::unordered_set<std::shared_ptr<entity::Wall>> walls;
 		std::unordered_set<std::shared_ptr<entity::GameEvent>> game_events;
+		std::unordered_set<std::shared_ptr<entity::Entity>> background;
 
 		//render stuff
 		std::shared_ptr<render::GPUprogram> gpu_program;

@@ -110,6 +110,10 @@ namespace controler{
 		game_events.insert(game_event);
 		collision_map->insert_mover(game_event);
 	}
+	auto GameLoop::insert_background(std::shared_ptr<entity::Entity> bg) -> void {
+		background.insert(bg);
+	}
+
 	auto GameLoop::remove_enemy(std::shared_ptr<entity::Enemy> enemy) -> void {
 		enemies.erase(enemy);
 		collision_map->remove_mover(enemy);
@@ -121,6 +125,9 @@ namespace controler{
 	auto GameLoop::remove_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void {
 		game_events.erase(game_event);
 		collision_map->remove_mover(game_event);
+	}
+	auto GameLoop::remove_background(std::shared_ptr<entity::Entity> bg) -> void {
+		background.erase(bg);
 	}
 
 	auto GameLoop::render_frame() -> void {
@@ -138,6 +145,9 @@ namespace controler{
 		}
 		for(auto game_event : game_events){
 			game_event->draw(game_event->get_transform());
+		}
+		for(auto bg : background){
+			bg->draw(bg->get_transform());
 		}
 	} 
 

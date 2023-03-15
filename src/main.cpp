@@ -20,13 +20,14 @@
 #include "renders/mesh.hpp"
 #include "controlers/collision.hpp"
 #include "controlers/gameloop.hpp"
+
 #define PI 3.141592f
 #define TARGET_FRAME_RATE 60.0f
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
+
 void print_exception(const std::exception& e, int level);
-auto player_movement() -> float;
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -45,6 +46,8 @@ typedef struct {
 WindowSize g_windowSize {WINDOW_WIDTH,WINDOW_HEIGHT};
 entity::PressedKeys g_keys{false, false, false, false};
 void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
+
+	log("load shaders");
 	//carrega os shaders
 	std::shared_ptr<render::GPUprogram> gpu_program;
 	std::shared_ptr<render::GPUprogram> wire_renderer;
@@ -57,26 +60,34 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
-	//render::ParsedObjMesh teapot_load_mesh;
+	log("load meshes");
+	
 	render::ParsedObjMesh cube_load_mesh;
 	render::ParsedObjMesh pawn_load_mesh;
+	render::ParsedObjMesh grass_load_mesh;
  
-	//std::shared_ptr<render::Mesh> teapot_mesh;
 	std::shared_ptr<render::Mesh> cube_mesh;
 	std::shared_ptr<render::Mesh> pawn_mesh;
+	std::shared_ptr<render::Mesh> grass_mesh;
 	try{
 		//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
 		cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
 		pawn_load_mesh.load_obj_file("models/pawn.obj", "models/materials");
-		//teapot_mesh = teapot_load_mesh.load_to_gpu();
+		grass_load_mesh.load_obj_file("models/grass_field.obj", "models/materials");
+
 		cube_mesh = cube_load_mesh.load_to_gpu();
 		pawn_mesh = pawn_load_mesh.load_to_gpu();
+
+		grass_mesh = grass_load_mesh.load_to_gpu();
 	}catch(const std::exception& e){
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
+	log("init enities");
+
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
+
 	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, pawn_mesh));
 	pawn->set_wire_mesh(cylinder_wire_mesh);
 	pawn->set_wire_renderer(wire_renderer);
@@ -84,10 +95,11 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
 	pawn->set_speed(0.05f);
 
-
 	std::shared_ptr<entity::Wall> wall(new entity::Wall(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
 	wall->set_wire_mesh(cube_wire_mesh);
 	wall->set_wire_renderer(wire_renderer);
+	
+	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.1f,5.0f,0.1f,1), gpu_program, grass_mesh));
 
 	std::shared_ptr<entity::GameEvent> coin(new entity::GameEvent(entity::GameEventTypes::Point, glm::vec4(-2,0,0.1f,1),gpu_program, cube_mesh));
 	coin->set_wire_mesh(cube_wire_mesh);
@@ -114,9 +126,10 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		&g_ScreenRatio, &g_Paused);
 
 	log("inserindo o inimigo");
-	game_controler.insert_wall(wall);
-	game_controler.insert_game_event(coin);
-	game_controler.insert_enemy(enemy);
+	//game_controler.insert_wall(wall);
+	//game_controler.insert_game_event(coin);
+	//game_controler.insert_enemy(enemy);
+	game_controler.insert_background(grass);
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
@@ -151,6 +164,8 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 }
 int main(int argc, char** argv)
 {
+	log("Init");
+
 	if(argc < 3){
        	std::cerr << "Not enought args, exepected 3.\n" << std::endl;
 		std::exit(EXIT_FAILURE);
@@ -277,7 +292,7 @@ void ErrorCallback(int error, const char* description)
 }
 void print_exception(const std::exception& e, int level)
 {
-    std::cerr << std::string(level, ' ') << "exception: " << e.what() << '\n';
+    std::cout << std::string(level, ' ') << "exception: " << e.what() << '\n';
     try {
         std::rethrow_if_nested(e);
     } catch(const std::exception& nestedException) {

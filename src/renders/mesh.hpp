@@ -43,6 +43,7 @@ namespace render{
 			auto load_texture_file(const char *filename) -> void;
 			//throws exception if no data
 			auto load_to_gpu() const -> GLuint;
+			auto log_data() const -> void;
 		private:
 			int width = 0;
 			int height = 0;
@@ -59,6 +60,7 @@ namespace render{
 			auto load_obj_file(const char* filename, const char* material_directory) -> void;
 			//throws exception if no data was loaded
 			auto load_to_gpu() -> std::shared_ptr<Mesh>; //retorna o id do VAO
+			auto log_parsed_textures() -> void;
 		private:
 			std::vector<glm::vec3> verts;
 			std::vector<glm::vec3> normals;
