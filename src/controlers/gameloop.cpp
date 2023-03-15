@@ -1,5 +1,4 @@
 #include "gameloop.hpp"
-
 namespace controler{
 	GameLoop::GameLoop(std::unique_ptr<entity::Camera> _camera,
 		std::unique_ptr<CollisionMap> _collision_map,
@@ -118,7 +117,6 @@ namespace controler{
 
 		const auto p_trans = player->get_transform();
 		player->draw(p_trans);
-
 		for(auto enemy: enemies){
 			enemy->draw(enemy->get_transform());
 		}
@@ -156,7 +154,6 @@ namespace controler{
 		const bool moved = player->direct_player(keys);
 		if(moved){ 
 			collision_map->remove_mover(player);
-
 			const auto player_dx = player->get_parcial_direction_x();
 			const auto collided_with_dx = collision_map->colide_direction(player,player_dx);
 			if(collided_with_dx == nullptr){
@@ -195,7 +192,6 @@ namespace controler{
 			collision_map->remove_mover(enemy);
 			//point direction towards the player 
 			enemy->direct_towards_player(player);
-
 			const auto enemy_dx = enemy->get_parcial_direction_x();
 			const auto collided_with_dx = collision_map->colide_direction(enemy,enemy_dx);
 			if(collided_with_dx == nullptr){
@@ -223,7 +219,7 @@ namespace controler{
 		return entity::GameEventTypes::None;
 	}
 	auto GameLoop::update_camera_look_at() -> void {
-		camera->update_position(*look_at_param);
+		camera->update_position(*look_at_param, player->get_cords());
 		camera->update_aspect_ratio(*screen_ratio);
 	}
 	auto GameLoop::update_camera_free(float delta_time) -> void {

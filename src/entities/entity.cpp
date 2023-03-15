@@ -1,4 +1,3 @@
-
 #include "entity.hpp"
 
 #include <cmath>
@@ -10,7 +9,6 @@ namespace entity{
 		const auto collision_normal = other->get_cords() - me->get_cords();
 		other->translate_direction(collision_normal/mtx::norm(collision_normal), delta_time);
 	}
-
 	/*
 	 * Enemy implementation 
 	*/
@@ -25,7 +23,6 @@ namespace entity{
 		const auto base_dir = get_base_direction();
 
 		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(player_dir.z, player_dir.x);
-		std::cout << angle << std::endl;
 		//const auto fixed_angle = normalized_player_dir.x < 0 ? angle * -1 : angle;
 		set_y_angle(angle < 0 ? angle + 2*pi : angle);
 	}
@@ -53,7 +50,6 @@ namespace entity{
 	/*
 	 * Player implementation 
 	*/
-
 	auto Player::direct_player(PressedKeys &keys) -> bool {
 		const float angle = player_angle_from_keys(keys);
 		if(angle == -1)
@@ -113,7 +109,6 @@ namespace entity{
 	auto Player::collide(std::shared_ptr<GameEvent> game_event, float delta_time) -> GameEventTypes {
 		return game_event->get_type();
 	}*/
-
 	auto Wall::collide(std::shared_ptr<Enemy> enemy, float delta_time) -> GameEventTypes {
 		cause_knock_back(this, enemy, delta_time);
 		return GameEventTypes::None;
@@ -126,5 +121,3 @@ namespace entity{
 		return type;
 	}
 }
-
-

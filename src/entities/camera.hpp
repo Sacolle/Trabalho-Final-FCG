@@ -18,9 +18,9 @@ namespace entity{
 	} RotationAngles;
 	class Camera {
 		public:
-			Camera();
+			Camera(glm::vec4 look_at);
 			auto update_aspect_ratio(float aspect_ratio) -> void;
-			auto update_position(LookAtParameters &parameters) -> void;
+			auto update_position(LookAtParameters &parameters, glm::vec4 new_look_at) -> void;
 			auto update_position(entity::PressedKeys &keys, float delta_time) -> void;
 			auto update_direction(RotationAngles &angles, float delta_time) -> void;
 			inline auto set_angles(LookAtParameters &parameters) -> void {
@@ -46,7 +46,6 @@ namespace entity{
 			float aspect_ratio;
 			float near_plane;
 			float far_plane;
-
 
 			glm::mat4 projection;
 			glm::mat4 view;

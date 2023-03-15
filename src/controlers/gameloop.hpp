@@ -1,5 +1,4 @@
 #pragma once
-
 #include <unordered_set>
 #include <memory>
 #include <iostream>
@@ -45,7 +44,6 @@ namespace controler{
 		auto insert_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto insert_wall(std::shared_ptr<entity::Wall> wall) -> void;
 		auto insert_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void;
-
 		auto remove_enemy(std::shared_ptr<entity::Enemy> enemy) -> void;
 		auto remove_wall(std::shared_ptr<entity::Wall> wall) -> void;
 		auto remove_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void;
@@ -61,15 +59,14 @@ namespace controler{
 		auto update_enemies(float delta_time) -> entity::GameEventTypes;
 		auto update_camera_look_at() -> void;
 		auto update_camera_free(float delta_time) -> void;
-		
+
 		/*changes the game state based on the game event*/
 		auto handle_event(entity::GameEventTypes game_event_type, std::shared_ptr<entity::GameEvent> game_event) -> void;
 
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;
-		
-		std::shared_ptr<entity::Player> player;
 
+		std::shared_ptr<entity::Player> player;
 		std::unordered_set<std::shared_ptr<entity::Enemy>> enemies;
 		std::unordered_set<std::shared_ptr<entity::Wall>> walls;
 		std::unordered_set<std::shared_ptr<entity::GameEvent>> game_events;

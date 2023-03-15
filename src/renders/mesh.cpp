@@ -48,9 +48,9 @@ namespace render{
 			const auto amount = elem.second.second;
 			
 			//change to &material.ambient[0] if performance demands
-			shader->set_vec3("Ka", glm::value_ptr(glm::vec3(material.ambient[0],material.ambient[1],material.ambient[2])));
-			shader->set_vec3("KdIn", glm::value_ptr(glm::vec3(material.diffuse[0], material.diffuse[1], material.diffuse[2])));
-			shader->set_vec3("Ks", glm::value_ptr(glm::vec3(material.specular[0], material.specular[1], material.specular[2])));
+			shader->set_3floats("Ka", material.ambient[0],material.ambient[1],material.ambient[2]);
+			shader->set_3floats("KdIn", material.diffuse[0], material.diffuse[1], material.diffuse[2]);
+			shader->set_3floats("Ks", material.specular[0], material.specular[1], material.specular[2]);
 			shader->set_float("q", material.shininess);
 			if (!material.diffuse_texname.empty() && texture_ids.count(material.diffuse_texname)) {
 				const auto texture = texture_ids[material.diffuse_texname];
@@ -92,11 +92,16 @@ namespace render{
 		for (const auto &shape : shapes){
             size_t num_triangles = shape.mesh.num_face_vertices.size();
             GLuint start_idx = indices.size();
-			if(shape.mesh.material_ids[0] == -1){
+			
+			if(num_triangles == 0) {
+				std::throw_with_nested(std::runtime_error("Shape has no triangles"));
+			}
+
+			if(shape.mesh.material_ids.at(0) == -1){
 				std::throw_with_nested(std::runtime_error("File has no material"));
 			}
-			GLuint material_id = shape.mesh.material_ids[0];
-
+			GLuint material_id = shape.mesh.material_ids.at(0);
+			
 			//for every triagle in the shape
             for (size_t t = 0; t < num_triangles; t++) {
                 assert(shape.mesh.num_face_vertices[t] == 3);

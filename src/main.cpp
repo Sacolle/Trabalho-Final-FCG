@@ -1,21 +1,17 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-
 // Headers abaixo são específicos de C++
 #include <vector>
 #include <iostream>
 #include <memory>
-
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
-
 //headers do IMGUI
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-
 //minhas implementações
 #include "renders/shader.hpp"
 #include "utils/matrix.hpp"
@@ -24,23 +20,18 @@
 #include "renders/mesh.hpp"
 #include "controlers/collision.hpp"
 #include "controlers/gameloop.hpp"
-
-
 #define PI 3.141592f
 #define TARGET_FRAME_RATE 60.0f
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
-
 void print_exception(const std::exception& e, int level);
 auto player_movement() -> float;
-
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
 //global values, TODO: organize in a struct
 float g_ScreenRatio = 1.0f;
 entity::LookAtParameters g_look_at_parameters { 0.0f, 0.0f, 8.0f };
@@ -52,9 +43,7 @@ typedef struct {
 	float width, height;
 } WindowSize;
 WindowSize g_windowSize {WINDOW_WIDTH,WINDOW_HEIGHT};
-
 entity::PressedKeys g_keys{false, false, false, false};
-
 void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
 	//carrega os shaders
 	std::shared_ptr<render::GPUprogram> gpu_program;
@@ -68,7 +57,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
-
 	//render::ParsedObjMesh teapot_load_mesh;
 	render::ParsedObjMesh cube_load_mesh;
 	render::ParsedObjMesh pawn_load_mesh;
@@ -87,18 +75,16 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
-
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
-
 	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, pawn_mesh));
 	pawn->set_wire_mesh(cylinder_wire_mesh);
 	pawn->set_wire_renderer(wire_renderer);
 	pawn->set_bbox_type(entity::BBoxType::Cylinder);
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
 	pawn->set_speed(0.05f);
-	
-	
+
+
 	std::shared_ptr<entity::Wall> wall(new entity::Wall(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
 	wall->set_wire_mesh(cube_wire_mesh);
 	wall->set_wire_renderer(wire_renderer);
@@ -119,7 +105,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
-		std::unique_ptr<entity::Camera>(new entity::Camera()),
+		std::unique_ptr<entity::Camera>(new entity::Camera(pawn->get_cords())),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
 		pawn,
 		gpu_program, wire_renderer,
@@ -134,7 +120,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
-
 	log("iniciando o loop de render");
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -143,7 +128,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		float now = (float)glfwGetTime();
 		float delta_time = (now - last_frame) * TARGET_FRAME_RATE;
 		last_frame = now;
-
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -157,9 +141,9 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		}
 	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
-		
+
 		game_controler.update(delta_time);
-  
+
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
@@ -190,11 +174,9 @@ int main(int argc, char** argv)
     //callback para o resize da janela, em q se deve realocar a memoria
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
     glfwSetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
-
     glfwSetMouseButtonCallback(window, MouseButtonCallback); //botao do mouse
     glfwSetCursorPosCallback(window, CursorPosCallback); //movimentar o cursor
     glfwSetKeyCallback(window, KeyCallback); //keypress
-
 	glfwMakeContextCurrent(window); //faz com q as chamadas do OpenGL façam render na janela
 	//load das funcões da Glad
     if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)){
@@ -202,25 +184,18 @@ int main(int argc, char** argv)
        	std::cerr << "ERROR: gladLoadGLLoader() failed.\n" << std::endl;
         std::exit(EXIT_FAILURE);
 	}
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-
 	ImGui::StyleColorsClassic();
-
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
-
     glEnable(GL_DEPTH_TEST);
-
 	game_loop(window, argv[1],argv[2]);
-
     // Finalizamos o uso dos recursos do sistema operacional
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-
 	glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
@@ -246,7 +221,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
     g_cursor.y = ypos;
 
 	if(!g_Paused) return;
-	
+
     g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
     g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
 }
@@ -255,7 +230,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
 	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-
 	if(key == GLFW_KEY_W && action == GLFW_PRESS){
 		g_keys.w = true;
 	}
@@ -293,7 +267,6 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_ScreenRatio = (float)width / height;
-
 	g_windowSize.width  = width;  // Salva a largura da tela
     g_windowSize.height = height; // Salva a altura  da tela
 }
@@ -301,7 +274,6 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 void ErrorCallback(int error, const char* description)
 {
     std::cerr << "ERROR: GLFW: " << description << std::endl;
-
 }
 void print_exception(const std::exception& e, int level)
 {
