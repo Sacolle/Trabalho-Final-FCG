@@ -8,6 +8,7 @@
 #include "../entities/camera.hpp"
 #include "../renders/shader.hpp"
 #include "collision.hpp"
+#include "generator.hpp"
 #include "../utils/matrix.hpp"
 
 namespace controler{
@@ -28,6 +29,7 @@ namespace controler{
 	public:
 		GameLoop(std::unique_ptr<entity::Camera> _camera,
 			std::unique_ptr<CollisionMap> _collision_map,
+			std::unique_ptr<Generator> _generator,
 			std::shared_ptr<entity::Player> _player,
 			std::shared_ptr<render::GPUprogram> gpu_program,
 			std::shared_ptr<render::GPUprogram> wire_renderer,
@@ -56,6 +58,7 @@ namespace controler{
 		auto render_frame() -> void;
 		auto render_bbox() -> void;
 
+		auto setup_playing_state() -> void;
 		auto update_playing(float delta_time) -> void;
 
 		auto update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>>;
@@ -69,6 +72,7 @@ namespace controler{
 
 		std::unique_ptr<entity::Camera> camera;
 		std::unique_ptr<CollisionMap> collision_map;
+		std::unique_ptr<Generator> generator;
 
 		std::shared_ptr<entity::Player> player;
 		std::unordered_set<std::shared_ptr<entity::Enemy>> enemies;
@@ -91,7 +95,7 @@ namespace controler{
 		bool *paused;
 
 		//FIXME: change to mainMenu when done with the screens
-		GameState state = GameState::Playing;
+		GameState state = GameState::MainMenu;
 
 		int score;
 		float time;

@@ -2,6 +2,7 @@
 namespace controler{
 	GameLoop::GameLoop(std::unique_ptr<entity::Camera> _camera,
 		std::unique_ptr<CollisionMap> _collision_map,
+		std::unique_ptr<Generator> _generator,
 		std::shared_ptr<entity::Player> _player,
 		std::shared_ptr<render::GPUprogram> gpu_program,
 		std::shared_ptr<render::GPUprogram> wire_renderer,
@@ -10,7 +11,8 @@ namespace controler{
 		entity::RotationAngles *rotation_angles,
 		CursorState *cursor,
 		float *screen_ratio, bool *paused):
-		camera(std::move(_camera)), collision_map(std::move(_collision_map)), player(_player),
+		camera(std::move(_camera)), collision_map(std::move(_collision_map)), generator(std::move(_generator)),
+		player(_player),
 		gpu_program(gpu_program), wire_renderer(wire_renderer),
 		pressed_keys(pressed_keys), look_at_param(look_at_param),
 		rotation_angles(rotation_angles), cursor(cursor),
@@ -25,6 +27,9 @@ namespace controler{
 		switch (state){
 		case GameState::MainMenu :
 			/* render the menu screen */
+			setup_playing_state();
+			std::cout << "generated map" << std::endl;
+			state = GameState::Playing;
 			break;
 		case GameState::Options :
 			/* render the options screen */
@@ -51,11 +56,28 @@ namespace controler{
 		}
 	}
 
+	auto GameLoop::setup_playing_state() -> void {
+		auto map_elements = generator->generate_map_elements(2);
+
+		for(const auto &tile : map_elements.tiles){
+			insert_background(tile);
+		}
+		for(const auto &wall : map_elements.walls){
+			insert_wall(wall);
+		}
+		for(const auto &ge : map_elements.game_events){
+			insert_game_event(ge);
+		}
+		const auto valid_position = generator->get_vacant_position();
+		player->set_cords(valid_position.x, valid_position.y, valid_position.z);
+	}
 	auto GameLoop::update_playing(float delta_time) -> void {
 		if(*paused){
 			update_camera_free(delta_time);
 		}
 		else {
+			//TODO: if certain time has passed *then* spawn an enemy
+
 			update_camera_look_at();
 			const auto event_player = update_player(delta_time,*pressed_keys);
 			handle_event(event_player.first, event_player.second);
@@ -72,8 +94,7 @@ namespace controler{
 		switch (game_event_type){
 		case entity::GameEventTypes::Point :
 			remove_game_event(game_event);
-			score++;
-			std::cout << score << std::endl;
+			std::cout << ++score << std::endl;
 			break;
 		case entity::GameEventTypes::EndPoint :
 			state = GameState::GameWin;

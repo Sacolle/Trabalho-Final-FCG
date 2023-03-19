@@ -38,7 +38,7 @@ namespace render{
 	class ParsedTextures{
 		public:
 			ParsedTextures(){}
-			ParsedTextures(ParsedTextures &t) = delete;
+			//ParsedTextures(ParsedTextures &t) = delete;
 			~ParsedTextures();
 			//throws exception with bad data
 			auto load_texture_file(const char *filename) -> void;

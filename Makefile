@@ -57,6 +57,7 @@ GAMELOOP_DEPENDS := \
 	entities/camera.hpp \
 	renders/shader.hpp \
 	controlers/collision.hpp \
+	controlers/generator.hpp \
 	utils/matrix.hpp
 $(OBJDIR)/gameloop.o : $(SRCDIR)/controlers/gameloop.cpp $(addprefix $(SRCDIR)/, $(GAMELOOP_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)

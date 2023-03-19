@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 // Headers abaixo são específicos de C++
 #include <vector>
 #include <iostream>
@@ -20,6 +21,9 @@
 #include "renders/mesh.hpp"
 #include "controlers/collision.hpp"
 #include "controlers/gameloop.hpp"
+
+#include "controlers/gamemap.hpp"
+
 
 #define PI 3.141592f
 #define TARGET_FRAME_RATE 60.0f
@@ -64,25 +68,28 @@ void game_loop(GLFWwindow *window){
 	
 	std::shared_ptr<render::Mesh> cube_mesh;
 	std::shared_ptr<render::Mesh> pawn_mesh;
-	std::shared_ptr<render::Mesh> grass_mesh;
+	std::shared_ptr<render::Mesh> grass_tile_mesh;
+	std::shared_ptr<render::Mesh> asphalt_tile_mesh;
 	{
-	render::ParsedObjMesh cube_load_mesh;
-	render::ParsedObjMesh pawn_load_mesh;
-	render::ParsedObjMesh grass_load_mesh;
-	try{
-		//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
-		cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
-		pawn_load_mesh.load_obj_file("models/pawn.obj", "models/materials");
-		grass_load_mesh.load_obj_file("models/grass_field.obj", "models/materials");
+		render::ParsedObjMesh cube_load_mesh;
+		render::ParsedObjMesh pawn_load_mesh;
+		render::ParsedObjMesh grass_load_mesh;
+		render::ParsedObjMesh asphalt_load_mesh;
+		try{
+			//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
+			cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
+			pawn_load_mesh.load_obj_file("models/pawn.obj", "models/materials");
+			grass_load_mesh.load_obj_file("models/grassTile.obj", "models/materials");
+			asphalt_load_mesh.load_obj_file("models/roadTile.obj", "models/materials");
 
-		cube_mesh = cube_load_mesh.load_to_gpu();
-		pawn_mesh = pawn_load_mesh.load_to_gpu();
-
-		grass_mesh = grass_load_mesh.load_to_gpu();
-	}catch(const std::exception& e){
-		print_exception(e,0);
-		std::exit(EXIT_FAILURE);
-	}
+			cube_mesh = cube_load_mesh.load_to_gpu();
+			pawn_mesh = pawn_load_mesh.load_to_gpu();
+			grass_tile_mesh = grass_load_mesh.load_to_gpu();
+			asphalt_tile_mesh = asphalt_load_mesh.load_to_gpu();
+		}catch(const std::exception& e){
+			print_exception(e,0);
+			std::exit(EXIT_FAILURE);
+		}
 	}
 
 	log("init enities");
@@ -97,6 +104,35 @@ void game_loop(GLFWwindow *window){
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
 	pawn->set_speed(0.05f);
 
+	std::unique_ptr<controler::Generator> game_generator(
+		new controler::Generator(
+			gpu_program, wire_renderer,
+			cube_wire_mesh, cylinder_wire_mesh,
+			10,3
+		)
+	);
+	//ading the meshes
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::ENEMY),pawn_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::POINT),cube_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::CAR),cube_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::HOUSE),cube_mesh);
+
+	//' ','+','|','-','#'
+	game_generator->insert_tile_mesh(' ', grass_tile_mesh); //grass
+	game_generator->insert_tile_mesh('#', grass_tile_mesh); //grass
+	game_generator->insert_tile_mesh('+', asphalt_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('|', asphalt_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('-', asphalt_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('C', asphalt_tile_mesh); //asphalt
+
+/*
+	const float tile_size = 3;
+	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.0f + (tile_size/2),-1.0f,0.0f + (tile_size/2),1), gpu_program, grass_tile_mesh));
+	grass->set_scale(tile_size,1,tile_size);
+	std::shared_ptr<entity::Entity> asphalt(new entity::Entity(glm::vec4(1*tile_size*2  + (tile_size/2),-1.0f,0.0f + (tile_size/2),1), gpu_program, asphalt_tile_mesh));
+	asphalt->set_scale(tile_size,1,tile_size);
+*/
+/*
 	std::shared_ptr<entity::Wall> wall(new entity::Wall(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
 	wall->set_wire_mesh(cube_wire_mesh);
 	wall->set_wire_renderer(wire_renderer);
@@ -115,12 +151,13 @@ void game_loop(GLFWwindow *window){
 	enemy->set_scale(0.5f,0.5f,0.5f);
 	enemy->set_bbox_size(0.8f,0.8f,0.8f);
 	enemy->set_speed(0.025f);
-
+*/
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
 		std::unique_ptr<entity::Camera>(new entity::Camera(pawn->get_cords())),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
+		std::move(game_generator),
 		pawn,
 		gpu_program, wire_renderer,
 		&g_keys, &g_look_at_parameters,
@@ -131,7 +168,8 @@ void game_loop(GLFWwindow *window){
 	//game_controler.insert_wall(wall);
 	//game_controler.insert_game_event(coin);
 	//game_controler.insert_enemy(enemy);
-	game_controler.insert_background(grass);
+	//game_controler.insert_background(grass);
+	//game_controler.insert_background(asphalt);
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
@@ -196,6 +234,8 @@ int main(int argc, char** argv)
        	std::cerr << "ERROR: gladLoadGLLoader() failed.\n" << std::endl;
         std::exit(EXIT_FAILURE);
 	}
+	srand(time(0));
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -205,6 +245,7 @@ int main(int argc, char** argv)
     glEnable(GL_DEPTH_TEST);
 
 	game_loop(window);
+
     // Finalizamos o uso dos recursos do sistema operacional
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
