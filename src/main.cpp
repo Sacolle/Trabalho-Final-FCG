@@ -45,14 +45,14 @@ typedef struct {
 } WindowSize;
 WindowSize g_windowSize {WINDOW_WIDTH,WINDOW_HEIGHT};
 entity::PressedKeys g_keys{false, false, false, false};
-void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragment_shader){
+void game_loop(GLFWwindow *window){
 
 	log("load shaders");
 	//carrega os shaders
 	std::shared_ptr<render::GPUprogram> gpu_program;
 	std::shared_ptr<render::GPUprogram> wire_renderer;
 	try{
-		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram(vertex_shader,fragment_shader));
+		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram("src/shaders/model_vertex.glsl", "src/shaders/model_fragment.glsl"));
 		std::shared_ptr<render::GPUprogram> wire_renderer_expt (new render::GPUprogram("src/shaders/wire_vertex.glsl","src/shaders/wire_fragment.glsl"));
 		gpu_program = gpu_program_expt;
 		wire_renderer = wire_renderer_expt;
@@ -62,13 +62,13 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	}
 	log("load meshes");
 	
-	render::ParsedObjMesh cube_load_mesh;
-	render::ParsedObjMesh pawn_load_mesh;
-	render::ParsedObjMesh grass_load_mesh;
- 
 	std::shared_ptr<render::Mesh> cube_mesh;
 	std::shared_ptr<render::Mesh> pawn_mesh;
 	std::shared_ptr<render::Mesh> grass_mesh;
+	{
+	render::ParsedObjMesh cube_load_mesh;
+	render::ParsedObjMesh pawn_load_mesh;
+	render::ParsedObjMesh grass_load_mesh;
 	try{
 		//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
 		cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
@@ -83,6 +83,8 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 		print_exception(e,0);
 		std::exit(EXIT_FAILURE);
 	}
+	}
+
 	log("init enities");
 
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
@@ -99,7 +101,7 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 	wall->set_wire_mesh(cube_wire_mesh);
 	wall->set_wire_renderer(wire_renderer);
 	
-	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.1f,5.0f,0.1f,1), gpu_program, grass_mesh));
+	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.1f,-1.0f,0.1f,1), gpu_program, grass_mesh));
 
 	std::shared_ptr<entity::GameEvent> coin(new entity::GameEvent(entity::GameEventTypes::Point, glm::vec4(-2,0,0.1f,1),gpu_program, cube_mesh));
 	coin->set_wire_mesh(cube_wire_mesh);
@@ -165,11 +167,6 @@ void game_loop(GLFWwindow *window, const char *vertex_shader, const char *fragme
 int main(int argc, char** argv)
 {
 	log("Init");
-
-	if(argc < 3){
-       	std::cerr << "Not enought args, exepected 3.\n" << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
     //Init da lib GLFW
     if (!glfwInit()){
        	std::cerr << "ERROR: glfwInit() failed.\n" << std::endl;
@@ -206,7 +203,8 @@ int main(int argc, char** argv)
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
     glEnable(GL_DEPTH_TEST);
-	game_loop(window, argv[1],argv[2]);
+
+	game_loop(window);
     // Finalizamos o uso dos recursos do sistema operacional
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

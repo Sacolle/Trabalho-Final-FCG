@@ -141,8 +141,9 @@ namespace render{
                         const float u = attrib.texcoords[2 * idx.texcoord_index + 0];
                         const float v = attrib.texcoords[2 * idx.texcoord_index + 1];
 						texture_cords.push_back(glm::vec2(u,v));
-                    }
-					texture_cords.push_back(glm::vec2(0,0));
+                    }else{
+						texture_cords.push_back(glm::vec2(0,0));
+					}
 				}
 			}
 			if(material_id > mats.size()){
@@ -154,14 +155,13 @@ namespace render{
 			const auto &mat_texture_name = mats.at(material_id).diffuse_texname;
 			//std::cout << "texture name " << mat_texture_name << std::endl;
 			if(!mat_texture_name.empty() && (textures.count(mat_texture_name) == 0)){
-				ParsedTextures texture;
+				ParsedTextures &texture = textures[mat_texture_name];
 				try{
 					texture.load_texture_file(mat_texture_name.c_str());
 				}catch(...){
 					std::string error("Attempt to parse ");
 					std::throw_with_nested(std::runtime_error(error + mat_texture_name + " failed."));
 				}
-				textures[mat_texture_name] = texture;
 			}
 		}
 		materials = std::move(mats);
@@ -222,7 +222,7 @@ namespace render{
 		glGenBuffers(1,&vbo_text_cords);
 		glBindBuffer(GL_ARRAY_BUFFER,vbo_text_cords);
 		glBufferData(GL_ARRAY_BUFFER, texture_cords.size() * sizeof(glm::vec2),NULL, GL_STATIC_DRAW);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, texture_cords.size() * sizeof(glm::vec3),&texture_cords[0]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, texture_cords.size() * sizeof(glm::vec2),&texture_cords[0]);
 
 		// "(location = 2)" em "shader_vertex.glsl"
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
@@ -257,12 +257,13 @@ namespace render{
 
 
 	ParsedTextures::~ParsedTextures(){
-		stbi_image_free(data);
+		if(data != nullptr)
+			stbi_image_free(data);
 	}
 	//throws exception with bad data
 	auto ParsedTextures::load_texture_file(const char *filename) -> void {
 		stbi_set_flip_vertically_on_load(true);
-		data = stbi_load(filename, &width, &height, &channels, 0);
+		data = stbi_load(filename, &width, &height, &channels, 4);
 		if(data == nullptr){
 			std::throw_with_nested(std::runtime_error("Error on Texture Load"));
 		}
@@ -283,7 +284,7 @@ namespace render{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		//glActiveTexture(GL_TEXTURE0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		//unbind

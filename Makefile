@@ -10,10 +10,10 @@ SRCDIR = src
 INCLUDEDIR = include
 
 SRCFILES = main.cpp \
-collision.cpp gameloop.cpp \
+collision.cpp gameloop.cpp gamemap.cpp generator.cpp \
 camera.cpp entity.cpp geometry.cpp \
 mesh.cpp renderable.cpp shader.cpp \
-matrix.cpp main.cpp
+matrix.cpp 
 
 # os objs escritos a serem lincados
 _OBJS := $(patsubst %.cpp,%.o,$(SRCFILES)) #convert to .o
@@ -59,6 +59,19 @@ GAMELOOP_DEPENDS := \
 	controlers/collision.hpp \
 	utils/matrix.hpp
 $(OBJDIR)/gameloop.o : $(SRCDIR)/controlers/gameloop.cpp $(addprefix $(SRCDIR)/, $(GAMELOOP_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+GAMEMAP_DEPENDS := controlers/gamemap.hpp 
+$(OBJDIR)/gamemap.o : $(SRCDIR)/controlers/gamemap.cpp $(addprefix $(SRCDIR)/, $(GAMEMAP_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+GENERATOR_DEPENDS := \
+	controlers/generator.hpp \
+	controlers/gamemap.hpp \
+	entities/entity.hpp \
+	renders/mesh.hpp \
+	renders/shader.hpp
+$(OBJDIR)/generator.o : $(SRCDIR)/controlers/generator.cpp $(addprefix $(SRCDIR)/, $(GENERATOR_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 #entities
@@ -121,4 +134,4 @@ $(OBJDIR)/%.o: $(LIBSDIR)/%.cpp
 clean:
 	rm -f $(OBJDIR)/*.o
 run: ./bin/main
-	./bin/main src/shaders/model_vertex.glsl src/shaders/model_fragment.glsl
+	./bin/main
