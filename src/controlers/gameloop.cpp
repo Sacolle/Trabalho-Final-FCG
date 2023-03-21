@@ -69,16 +69,24 @@ namespace controler{
 			insert_game_event(ge);
 		}
 		const auto valid_position = generator->get_vacant_position();
+		collision_map->remove_mover(player);
 		player->set_cords(valid_position.x, valid_position.y, valid_position.z);
+		collision_map->insert_mover(player);
 	}
 	auto GameLoop::update_playing(float delta_time) -> void {
 		if(*paused){
 			update_camera_free(delta_time);
 		}
 		else {
-			//TODO: if certain time has passed *then* spawn an enemy
+			time += delta_time;
+			if(static_cast<int>(time) % spawn_rate == 0){
+				std::cout << "spawn enemy" << std::endl;
+				auto new_enemy = generator->generate_enemy(static_cast<int>(MeshIds::ENEMY));
+				insert_enemy(new_enemy);
+			}
 
 			update_camera_look_at();
+			//std::cout << "update player" << std::endl;
 			const auto event_player = update_player(delta_time,*pressed_keys);
 			handle_event(event_player.first, event_player.second);
 			const auto event_enemies = update_enemies(delta_time);
@@ -197,7 +205,10 @@ namespace controler{
 	auto GameLoop::update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>> {
 		const bool moved = player->direct_player(keys);
 		if(moved){ 
-			collision_map->remove_mover(player);
+			//std::cout << "player position \n\tx: " << player->get_cords().x << "\n\tz: " << player->get_cords().z << std::endl;
+			int n_removed = collision_map->remove_mover(player);
+			assert(n_removed == 1);
+
 			const auto player_dx = player->get_parcial_direction_x();
 			const auto collided_with_dx = collision_map->colide_direction(player,player_dx);
 			if(collided_with_dx == nullptr){
@@ -205,6 +216,7 @@ namespace controler{
 			}else{
 				const auto resulting_event = collided_with_dx->collide(player, delta_time);
 				if(is_game_event_event(resulting_event)){
+					std::cout << "event" << std::endl;
 					return std::make_pair(resulting_event, std::dynamic_pointer_cast<entity::GameEvent>(collided_with_dx));
 				}else if(resulting_event == entity::GameEventTypes::GameOver){
 					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
@@ -229,7 +241,14 @@ namespace controler{
 
 	auto GameLoop::update_enemies(float delta_time) -> entity::GameEventTypes {
 		for(auto enemy: enemies){
-			collision_map->remove_mover(enemy);
+			//increasse speed based on time
+			if(static_cast<int>(time) % speed_increasse_rate == 0){
+				const float enemy_speed = enemy->get_speed();
+				enemy->set_speed(enemy_speed + speed_increasse);
+			}
+
+			int n_removed = collision_map->remove_mover(enemy);
+			assert(n_removed == 1);
 			//point direction towards the player 
 			enemy->direct_towards_player(player);
 			const auto enemy_dx = enemy->get_parcial_direction_x();

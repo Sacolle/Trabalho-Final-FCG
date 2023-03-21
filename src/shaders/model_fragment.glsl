@@ -68,14 +68,7 @@ void main()
     }
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso, especular, e ambiente.
-    //color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
-	if(using_texture){
-		color.rgb = texture(texture0, text_cords).rgb * (lambert + 0.01);
-		color.a = 1;
-	}else{
-		color.rgb = vec3(0.0,0.0,1.0);
-		color.a = 1;
-	}
+    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
     // Cor final com correção gamma, considerando monitor sRGB.
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);

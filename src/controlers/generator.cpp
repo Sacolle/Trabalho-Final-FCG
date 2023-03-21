@@ -61,6 +61,12 @@ namespace controler{
 					);
 					wall->set_wire_mesh(cube_wire_mesh);
 					wall->set_wire_renderer(wire_renderer);
+
+					wall->set_scale(0.05f * tile_size , 0.08f * tile_size , 0.05f * tile_size);
+					wall->set_base_translate(2.0f,-4.0f,0.0f);
+
+					wall->set_bbox_size(0.75f * tile_size, 1.0f, 0.45f * tile_size);
+
 					result.walls.push_back(wall);
 				}
 				//add endpoint
@@ -68,10 +74,10 @@ namespace controler{
 					//std::cout << "ADD CAR" << std::endl;
 					std::shared_ptr<entity::GameEvent> car(
 						new entity::GameEvent(
-							entity::GameEventTypes::EndPoint,
 							glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
 							gpu_program,
-							meshes.at(static_cast<int>(MeshIds::CAR))
+							meshes.at(static_cast<int>(MeshIds::CAR)),
+							entity::GameEventTypes::EndPoint
 						)
 					);
 					car->set_wire_mesh(cube_wire_mesh);
@@ -90,10 +96,10 @@ namespace controler{
 						//std::cout << "ADD POINT" << std::endl;
 						std::shared_ptr<entity::GameEvent> point(
 							new entity::GameEvent(
-								entity::GameEventTypes::Point,
 								glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
 								gpu_program,
-								meshes.at(static_cast<int>(MeshIds::POINT))
+								meshes.at(static_cast<int>(MeshIds::POINT)),
+								entity::GameEventTypes::Point
 							)
 						);
 						point->set_wire_mesh(cube_wire_mesh);
@@ -115,8 +121,10 @@ namespace controler{
 			vacant_tile.begin(),
 			vacant_tile.end(),
 			std::back_inserter(valid_tiles),
-			[&](int idx){return ocupied_spaces.count(idx) == 1;}
+			[&](int idx){return ocupied_spaces.count(idx) == 0;}
 		);
+		vacant_tile = valid_tiles;
+
 		return result;
 	}
 	auto Generator::generate_char_map(int end_points) -> void {
@@ -151,6 +159,8 @@ namespace controler{
 
 		enemy->set_bbox_size(2.0f,1.0f,2.0f);
 		enemy->set_bbox_type(entity::BBoxType::Cylinder);
+
+		enemy->set_speed(0.05f);
 
 		return enemy;
 	}

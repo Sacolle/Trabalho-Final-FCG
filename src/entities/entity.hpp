@@ -108,10 +108,11 @@ namespace entity{
 
 	class GameEvent : public Entity {
 		public:
-			GameEvent(GameEventTypes type,
+			GameEvent(
 				glm::vec4 cords, 
 				std::shared_ptr<render::GPUprogram> gpu_program,
-				std::shared_ptr<render::Mesh> mesh): type(type), Entity(cords, gpu_program, mesh){} 
+				std::shared_ptr<render::Mesh> mesh,
+				GameEventTypes type): Entity(cords, gpu_program, mesh), type(type){} 
 			GameEvent(){}
 			virtual ~GameEvent(){}
 

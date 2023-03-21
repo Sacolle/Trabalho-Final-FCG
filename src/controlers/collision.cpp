@@ -46,10 +46,18 @@ namespace controler{
 		return out;
 	}
 
+	auto SpacialHash::log() const -> void {
+		std::cout << "cell size x: " << cell_x << " y: " << cell_y << std::endl;
+	}
+
 	CollisionMap::CollisionMap(float max_width, float max_depth, float mover_cell_grain, float obj_cell_grain):
 	max_width(max_width),max_depth(max_depth),mover_cell_grain(mover_cell_grain),obj_cell_grain(obj_cell_grain),
 		mover_map(SpacialHash(max_width/mover_cell_grain, max_depth/mover_cell_grain)),
-		obj_map(SpacialHash(max_width/obj_cell_grain, max_depth/obj_cell_grain)){}
+		obj_map(SpacialHash(max_width/obj_cell_grain, max_depth/obj_cell_grain))
+	{
+		mover_map.log();
+		obj_map.log();
+	}
 
 	auto CollisionMap::insert_obj(Entt obj) -> int {
 		auto c_key = obj_map.make_key(obj);
@@ -172,6 +180,10 @@ namespace controler{
 		for(auto prox: mover_neighbors){
 			for(auto it = prox->begin(); it != prox->end();++it){
 				auto collision_target = direction_will_collide(entity, *it, direction);
+				/*
+				if(collision_target == entity){
+					std::cout << "Are you colliding with yourself swidward?" << std::endl;
+				}*/
 				if(collision_target != nullptr){
 					return collision_target;
 				}
@@ -187,10 +199,7 @@ namespace controler{
 				}
 			}
 		}
+		//std::cout << "There were:\n\tmover_calls: " << mover_calls << "\n\tobj_calls: " << obj_calls << std::endl;
 		return nullptr;
 	}
-	/*
-	auto CollisionMap::make_path(Entt entity, Entt player) -> Path {
-
-	}*/
 }

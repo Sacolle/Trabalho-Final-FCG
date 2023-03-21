@@ -22,14 +22,13 @@
 #include "controlers/collision.hpp"
 #include "controlers/gameloop.hpp"
 
-#include "controlers/gamemap.hpp"
-
-
 #define PI 3.141592f
 #define TARGET_FRAME_RATE 60.0f
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
+
+auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>;
 
 void print_exception(const std::exception& e, int level);
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -39,7 +38,7 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 //global values, TODO: organize in a struct
 float g_ScreenRatio = 1.0f;
-entity::LookAtParameters g_look_at_parameters { 0.0f, 0.0f, 8.0f };
+entity::LookAtParameters g_look_at_parameters { 0.84f, 0.0f, 30.0f };
 entity::RotationAngles g_angles { 0.0f, 0.0f };
 controler::CursorState g_cursor { 0, 0, false};
 bool g_Paused = false;
@@ -66,31 +65,13 @@ void game_loop(GLFWwindow *window){
 	}
 	log("load meshes");
 	
-	std::shared_ptr<render::Mesh> cube_mesh;
-	std::shared_ptr<render::Mesh> pawn_mesh;
-	std::shared_ptr<render::Mesh> grass_tile_mesh;
-	std::shared_ptr<render::Mesh> asphalt_tile_mesh;
-	{
-		render::ParsedObjMesh cube_load_mesh;
-		render::ParsedObjMesh pawn_load_mesh;
-		render::ParsedObjMesh grass_load_mesh;
-		render::ParsedObjMesh asphalt_load_mesh;
-		try{
-			//teapot_load_mesh.load_obj_file("models/teapot.obj", "models/materials");
-			cube_load_mesh.load_obj_file("models/cube.obj", "models/materials");
-			pawn_load_mesh.load_obj_file("models/pawn.obj", "models/materials");
-			grass_load_mesh.load_obj_file("models/grassTile.obj", "models/materials");
-			asphalt_load_mesh.load_obj_file("models/roadTile.obj", "models/materials");
-
-			cube_mesh = cube_load_mesh.load_to_gpu();
-			pawn_mesh = pawn_load_mesh.load_to_gpu();
-			grass_tile_mesh = grass_load_mesh.load_to_gpu();
-			asphalt_tile_mesh = asphalt_load_mesh.load_to_gpu();
-		}catch(const std::exception& e){
-			print_exception(e,0);
-			std::exit(EXIT_FAILURE);
-		}
-	}
+	auto cube_mesh = load_mesh("models/cube.obj");
+	auto pawn_mesh = load_mesh("models/pawn.obj");
+	auto house_mesh = load_mesh("models/house.obj");
+	auto grass_tile_mesh = load_mesh("models/grass_tile.obj");
+	auto horizontal_road_tile_mesh = load_mesh("models/horizontal_road_tile.obj");
+	auto vertical_road_tile_mesh = load_mesh("models/vertical_road_tile.obj");
+	auto cross_section_tile_mesh = load_mesh("models/cross_section_tile.obj");
 
 	log("init enities");
 
@@ -102,28 +83,30 @@ void game_loop(GLFWwindow *window){
 	pawn->set_wire_renderer(wire_renderer);
 	pawn->set_bbox_type(entity::BBoxType::Cylinder);
 	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
-	pawn->set_speed(0.05f);
+	pawn->set_speed(0.1f);
+
+	//pawn->set_base_translate(0.0f,3.0f,0.0f);
 
 	std::unique_ptr<controler::Generator> game_generator(
 		new controler::Generator(
 			gpu_program, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
-			10,3
+			10,10
 		)
 	);
 	//ading the meshes
 	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::ENEMY),pawn_mesh);
 	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::POINT),cube_mesh);
 	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::CAR),cube_mesh);
-	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::HOUSE),cube_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::HOUSE),house_mesh);
 
 	//' ','+','|','-','#'
 	game_generator->insert_tile_mesh(' ', grass_tile_mesh); //grass
 	game_generator->insert_tile_mesh('#', grass_tile_mesh); //grass
-	game_generator->insert_tile_mesh('+', asphalt_tile_mesh); //asphalt
-	game_generator->insert_tile_mesh('|', asphalt_tile_mesh); //asphalt
-	game_generator->insert_tile_mesh('-', asphalt_tile_mesh); //asphalt
-	game_generator->insert_tile_mesh('C', asphalt_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('+', cross_section_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('|', vertical_road_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('-', horizontal_road_tile_mesh); //asphalt
+	game_generator->insert_tile_mesh('C', cross_section_tile_mesh); //asphalt
 
 /*
 	const float tile_size = 3;
@@ -156,7 +139,7 @@ void game_loop(GLFWwindow *window){
 
 	controler::GameLoop game_controler(
 		std::unique_ptr<entity::Camera>(new entity::Camera(pawn->get_cords())),
-		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,2,2)),
+		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
 		pawn,
 		gpu_program, wire_renderer,
@@ -188,7 +171,7 @@ void game_loop(GLFWwindow *window){
 			ImGui::Begin("Camera Movment");
             ImGui::SliderFloat("phi", &g_look_at_parameters.phi, 0.0f, 3.14f);
             ImGui::SliderFloat("theta", &g_look_at_parameters.theta, 0.0f, 3.14f);
-            ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 20.0f);
+            ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 40.0f);
 			ImGui::Checkbox("render bbox", &render_bbox);
 			ImGui::End();
 		}
@@ -254,6 +237,20 @@ int main(int argc, char** argv)
     glfwTerminate();
     return 0;
 }
+
+auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>{
+	render::ParsedObjMesh load_mesh;
+	std::shared_ptr<render::Mesh> res;
+	try{
+		load_mesh.load_obj_file(file, "models/materials");
+		res = load_mesh.load_to_gpu();
+	}catch(const std::exception& e){
+		print_exception(e,0);
+		std::exit(EXIT_FAILURE);
+	}
+	return res;
+}
+
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods){
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {

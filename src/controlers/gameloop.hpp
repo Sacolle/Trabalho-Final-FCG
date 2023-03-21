@@ -98,7 +98,12 @@ namespace controler{
 		GameState state = GameState::MainMenu;
 
 		int score;
-		float time;
+		float time = 0;
+		int spawn_rate = 200;
+
+		int speed_increasse_rate = 200;
+		float speed_increasse = 0.0025f;
+
 		bool draw_bbox = true;
 	};
 }

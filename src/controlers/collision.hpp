@@ -49,6 +49,8 @@ namespace controler{
 			auto remove(std::pair<int,int> key, Entt elem) -> int;
 			auto get_cell(std::pair<int,int> key) -> std::forward_list<Entt>*;
 			auto get_quadrant(std::pair<int,int> key) -> std::vector<std::forward_list<Entt>*>;
+
+			auto log() const -> void;
 			//auto get_quadrant(std::pair<int,int> key, int mask) -> NeighborIter;
 		private:
 			//have it at minimum the size of the biggest enemy
@@ -58,12 +60,6 @@ namespace controler{
 				std::pair<int,int>,
 				std::forward_list<Entt>,
 				pair_hash, pair_equal_to> map;
-	};
-	class Path{
-		//stuff
-		private:
-			float weight;
-			std::vector<glm::vec4> points;
 	};
 	/*
 	Has the job to handle collisions and generate paths
@@ -82,8 +78,6 @@ namespace controler{
 
 			//auto colide_foward(Entt entity) -> bool;
 			auto colide_direction(Entt entity, const glm::vec4 direction) -> Entt;
-
-			auto make_path(Entt entity, Entt player) -> Path;
 		private:
 			auto direction_will_collide(Entt target ,Entt geometry, const glm::vec4 &dir) -> Entt;
 			auto box_to_box_collision(Entt target ,Entt geometry, const glm::vec4 future_pos) const -> bool;

@@ -290,7 +290,6 @@ namespace render{
 		//unbind
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-
 		return texture_id;
 	}
 
