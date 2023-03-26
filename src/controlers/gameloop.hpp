@@ -6,6 +6,7 @@
 
 #include "../entities/entity.hpp"
 #include "../entities/camera.hpp"
+#include "../entities/screen.hpp"
 #include "../renders/shader.hpp"
 #include "collision.hpp"
 #include "generator.hpp"
@@ -33,6 +34,7 @@ namespace controler{
 			std::shared_ptr<entity::Player> _player,
 			std::shared_ptr<render::GPUprogram> gpu_program,
 			std::shared_ptr<render::GPUprogram> wire_renderer,
+			std::shared_ptr<render::GPUprogram> menu_renderer,
 			entity::PressedKeys *pressed_keys,
 			entity::LookAtParameters *look_at_param,
 			entity::RotationAngles *rotation_angles,
@@ -53,13 +55,17 @@ namespace controler{
 		auto remove_game_event(std::shared_ptr<entity::GameEvent> game_event) -> void;
 		auto remove_background(std::shared_ptr<entity::Entity> bg) -> void;
 
+		inline auto insert_screen(GameState state, std::shared_ptr<entity::Screen> screen) -> void { screens[state] = screen; }
 		inline auto set_draw_bbox(bool cond) -> void { draw_bbox = cond; }
 	private:
 		auto render_frame() -> void;
 		auto render_bbox() -> void;
 
-		auto setup_playing_state() -> void;
+		auto update_menu() -> void;
 		auto update_playing(float delta_time) -> void;
+		
+		auto setup_playing_state() -> void;
+		auto clear_playing_state() -> void;
 
 		auto update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>>;
 		auto update_enemies(float delta_time) -> entity::GameEventTypes;
@@ -74,6 +80,7 @@ namespace controler{
 		std::unique_ptr<CollisionMap> collision_map;
 		std::unique_ptr<Generator> generator;
 
+		//entities
 		std::shared_ptr<entity::Player> player;
 		std::unordered_set<std::shared_ptr<entity::Enemy>> enemies;
 		std::unordered_set<std::shared_ptr<entity::Wall>> walls;
@@ -83,6 +90,10 @@ namespace controler{
 		//render stuff
 		std::shared_ptr<render::GPUprogram> gpu_program;
 		std::shared_ptr<render::GPUprogram> wire_renderer;
+		std::shared_ptr<render::GPUprogram> menu_renderer;
+
+		//screens
+		std::unordered_map<GameState, std::shared_ptr<entity::Screen>> screens;
 
 
 		//global values changed by glfwcallbacks

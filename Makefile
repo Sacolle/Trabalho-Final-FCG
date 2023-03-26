@@ -11,7 +11,7 @@ INCLUDEDIR = include
 
 SRCFILES = main.cpp \
 collision.cpp gameloop.cpp gamemap.cpp generator.cpp \
-camera.cpp entity.cpp geometry.cpp \
+camera.cpp entity.cpp geometry.cpp screen.cpp \
 mesh.cpp renderable.cpp shader.cpp \
 matrix.cpp 
 
@@ -39,8 +39,9 @@ MAIN_DEPENDS := \
 	renders/mesh.hpp \
 	utils/matrix.hpp \
 	entities/camera.hpp \
+	entities/screen.hpp \
 	controlers/gameloop.hpp \
-	controlers/collision.hpp
+	controlers/collision.hpp 
 $(OBJDIR)/main.o : $(SRCDIR)/main.cpp $(addprefix $(SRCDIR)/, $(MAIN_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -55,6 +56,7 @@ GAMELOOP_DEPENDS := \
 	controlers/gameloop.hpp \
 	entities/entity.hpp \
 	entities/camera.hpp \
+	entities/screen.hpp \
 	renders/shader.hpp \
 	controlers/collision.hpp \
 	controlers/generator.hpp \
@@ -96,6 +98,13 @@ GEOMETRY_DEPENDS := \
 	entities/geometry.hpp \
 	utils/matrix.hpp
 $(OBJDIR)/geometry.o : $(SRCDIR)/entities/geometry.cpp $(addprefix $(SRCDIR)/,$(GEOMETRY_DEPENDS))	
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
+
+SCREEN_DEPENDS := \
+	entities/screen.hpp \
+	entities/geometry.hpp \
+	renders/renderable.hpp 
+$(OBJDIR)/screen.o : $(SRCDIR)/entities/screen.cpp $(addprefix $(SRCDIR)/,$(SCREEN_DEPENDS))	
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 #renders

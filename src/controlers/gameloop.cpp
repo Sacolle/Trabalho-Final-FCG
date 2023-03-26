@@ -6,6 +6,7 @@ namespace controler{
 		std::shared_ptr<entity::Player> _player,
 		std::shared_ptr<render::GPUprogram> gpu_program,
 		std::shared_ptr<render::GPUprogram> wire_renderer,
+		std::shared_ptr<render::GPUprogram> menu_renderer,
 		entity::PressedKeys *pressed_keys,
 		entity::LookAtParameters *look_at_param,
 		entity::RotationAngles *rotation_angles,
@@ -13,7 +14,7 @@ namespace controler{
 		float *screen_ratio, bool *paused):
 		camera(std::move(_camera)), collision_map(std::move(_collision_map)), generator(std::move(_generator)),
 		player(_player),
-		gpu_program(gpu_program), wire_renderer(wire_renderer),
+		gpu_program(gpu_program), wire_renderer(wire_renderer), menu_renderer(menu_renderer),
 		pressed_keys(pressed_keys), look_at_param(look_at_param),
 		rotation_angles(rotation_angles), cursor(cursor),
 		screen_ratio(screen_ratio), paused(paused)
@@ -27,9 +28,10 @@ namespace controler{
 		switch (state){
 		case GameState::MainMenu :
 			/* render the menu screen */
-			setup_playing_state();
-			std::cout << "generated map" << std::endl;
-			state = GameState::Playing;
+			update_menu();
+			//setup_playing_state();
+			//std::cout << "generated map" << std::endl;
+			//state = GameState::Playing;
 			break;
 		case GameState::Options :
 			/* render the options screen */
@@ -72,6 +74,52 @@ namespace controler{
 		collision_map->remove_mover(player);
 		player->set_cords(valid_position.x, valid_position.y, valid_position.z);
 		collision_map->insert_mover(player);
+	}
+	auto GameLoop::clear_playing_state() -> void {
+		score = 0;
+		time = 0;
+		enemies.clear();
+		game_events.clear();
+		walls.clear();
+		background.clear();
+	}
+
+	auto GameLoop::update_menu() -> void {
+		
+		entity::LookAtParameters menu_view{0,0,1.5};
+		camera->update_position(menu_view, glm::vec4(0.0f,0.0f,0.0f,1.0f));
+		camera->update_aspect_ratio(*screen_ratio);
+
+		menu_renderer->use_prog();
+		menu_renderer->set_mtx("view",camera->get_view_ptr());
+		menu_renderer->set_mtx("projection",camera->get_projection_ptr());
+
+		const auto menu_screen = screens.at(GameState::MainMenu);
+		menu_screen->draw(menu_screen->get_transform());
+		menu_screen->draw_nodes();
+		if(cursor->clicked){
+			std::cout << "x: " << cursor->x << " y: " << cursor->y << std::endl;
+			const auto action = menu_screen->click_action(cursor->x,cursor->y,800,800);
+			switch (action){
+			case entity::MenuOptions::Play:
+				std::cout << "Play" << std::endl;
+				state = GameState::Playing;
+				setup_playing_state();
+				break;
+			case entity::MenuOptions::Exit:
+				std::cout << "Thanks for Playing" << std::endl;
+				exit(0);
+				break;
+			case entity::MenuOptions::Retry:
+				state = GameState::Playing;
+				clear_playing_state();
+				setup_playing_state();
+				break;
+			default:
+				std::cout << "None" << std::endl;
+				break;
+			}
+		}
 	}
 	auto GameLoop::update_playing(float delta_time) -> void {
 		if(*paused){

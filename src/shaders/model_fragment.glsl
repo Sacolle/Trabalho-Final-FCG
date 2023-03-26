@@ -71,6 +71,6 @@ void main()
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
     // Cor final com correção gamma, considerando monitor sRGB.
-    color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+    //color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 } 
 

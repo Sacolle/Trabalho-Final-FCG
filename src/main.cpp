@@ -18,6 +18,7 @@
 #include "utils/matrix.hpp"
 #include "entities/entity.hpp"
 #include "entities/camera.hpp"
+#include "entities/screen.hpp"
 #include "renders/mesh.hpp"
 #include "controlers/collision.hpp"
 #include "controlers/gameloop.hpp"
@@ -29,6 +30,7 @@
 #define log(text) std::cout << text << std::endl
 
 auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>;
+auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr<render::GPUprogram>;
 
 void print_exception(const std::exception& e, int level);
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -52,19 +54,15 @@ void game_loop(GLFWwindow *window){
 
 	log("load shaders");
 	//carrega os shaders
-	std::shared_ptr<render::GPUprogram> gpu_program;
-	std::shared_ptr<render::GPUprogram> wire_renderer;
-	try{
-		std::shared_ptr<render::GPUprogram> gpu_program_expt (new render::GPUprogram("src/shaders/model_vertex.glsl", "src/shaders/model_fragment.glsl"));
-		std::shared_ptr<render::GPUprogram> wire_renderer_expt (new render::GPUprogram("src/shaders/wire_vertex.glsl","src/shaders/wire_fragment.glsl"));
-		gpu_program = gpu_program_expt;
-		wire_renderer = wire_renderer_expt;
-	}catch(const std::exception& e){
-		print_exception(e,0);
-		std::exit(EXIT_FAILURE);
-	}
+	auto gpu_program   = load_gpu_program("src/shaders/model_vertex.glsl","src/shaders/model_fragment.glsl");
+	auto wire_renderer = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
+	auto menu_renderer = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
+
 	log("load meshes");
 	
+	auto main_menu_mesh = load_mesh("models/main_menu.obj");
+	auto new_game_menu_item_mesh = load_mesh("models/new_game_menu_item.obj");
+
 	auto cube_mesh = load_mesh("models/cube.obj");
 	auto pawn_mesh = load_mesh("models/pawn.obj");
 	auto house_mesh = load_mesh("models/house.obj");
@@ -108,33 +106,6 @@ void game_loop(GLFWwindow *window){
 	game_generator->insert_tile_mesh('-', horizontal_road_tile_mesh); //asphalt
 	game_generator->insert_tile_mesh('C', cross_section_tile_mesh); //asphalt
 
-/*
-	const float tile_size = 3;
-	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.0f + (tile_size/2),-1.0f,0.0f + (tile_size/2),1), gpu_program, grass_tile_mesh));
-	grass->set_scale(tile_size,1,tile_size);
-	std::shared_ptr<entity::Entity> asphalt(new entity::Entity(glm::vec4(1*tile_size*2  + (tile_size/2),-1.0f,0.0f + (tile_size/2),1), gpu_program, asphalt_tile_mesh));
-	asphalt->set_scale(tile_size,1,tile_size);
-*/
-/*
-	std::shared_ptr<entity::Wall> wall(new entity::Wall(glm::vec4(2,0,0.1f,1),gpu_program, cube_mesh));
-	wall->set_wire_mesh(cube_wire_mesh);
-	wall->set_wire_renderer(wire_renderer);
-	
-	std::shared_ptr<entity::Entity> grass(new entity::Entity(glm::vec4(0.1f,-1.0f,0.1f,1), gpu_program, grass_mesh));
-
-	std::shared_ptr<entity::GameEvent> coin(new entity::GameEvent(entity::GameEventTypes::Point, glm::vec4(-2,0,0.1f,1),gpu_program, cube_mesh));
-	coin->set_wire_mesh(cube_wire_mesh);
-	coin->set_wire_renderer(wire_renderer);
-	coin->set_scale(0.5f,0.5f,0.5f);
-	coin->set_bbox_size(0.5f,0.5f,0.5f);
-
-	std::shared_ptr<entity::Enemy> enemy(new entity::Enemy(glm::vec4(-10,0,0.1f,1),gpu_program, pawn_mesh));
-	enemy->set_wire_mesh(cylinder_wire_mesh);
-	enemy->set_wire_renderer(wire_renderer);
-	enemy->set_scale(0.5f,0.5f,0.5f);
-	enemy->set_bbox_size(0.8f,0.8f,0.8f);
-	enemy->set_speed(0.025f);
-*/
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
@@ -142,17 +113,18 @@ void game_loop(GLFWwindow *window){
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
 		pawn,
-		gpu_program, wire_renderer,
+		gpu_program, wire_renderer, menu_renderer,
 		&g_keys, &g_look_at_parameters,
 		&g_angles, &g_cursor,
 		&g_ScreenRatio, &g_Paused);
 
 	log("inserindo o inimigo");
-	//game_controler.insert_wall(wall);
-	//game_controler.insert_game_event(coin);
-	//game_controler.insert_enemy(enemy);
-	//game_controler.insert_background(grass);
-	//game_controler.insert_background(asphalt);
+
+	std::shared_ptr<entity::Screen> menu_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, main_menu_mesh));
+	std::shared_ptr<entity::Node> start_node(new entity::Node(glm::vec4(0.0f,0.0f,0.1f,1.0f), menu_renderer, new_game_menu_item_mesh,entity::MenuOptions::Play));
+	menu_screen->insert_nodes(start_node,464,362,24,776,800,800);
+
+	game_controler.insert_screen(controler::GameState::MainMenu, menu_screen);
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
@@ -187,7 +159,6 @@ void game_loop(GLFWwindow *window){
 }
 int main(int argc, char** argv)
 {
-	log("Init");
     //Init da lib GLFW
     if (!glfwInit()){
        	std::cerr << "ERROR: glfwInit() failed.\n" << std::endl;
@@ -236,6 +207,18 @@ int main(int argc, char** argv)
 	glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
+}
+
+auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr<render::GPUprogram> {
+	std::shared_ptr<render::GPUprogram> renderer;
+	try{
+		std::shared_ptr<render::GPUprogram> program_expt (new render::GPUprogram(vertex, frag));
+		renderer = program_expt;
+	}catch(const std::exception& e){
+		print_exception(e,0);
+		std::exit(EXIT_FAILURE);
+	}
+	return renderer;
 }
 
 auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>{
