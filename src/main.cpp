@@ -54,9 +54,12 @@ void game_loop(GLFWwindow *window){
 
 	log("load shaders");
 	//carrega os shaders
-	auto gpu_program   = load_gpu_program("src/shaders/model_vertex.glsl","src/shaders/model_fragment.glsl");
-	auto wire_renderer = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
-	auto menu_renderer = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
+	auto phong_phong     = load_gpu_program("src/shaders/phong_Blinn-Phong_vertex.glsl","src/shaders/phong_Blinn-Phong_fragment.glsl");
+	auto phong_diffuse   = load_gpu_program("src/shaders/phong_diffuse_vertex.glsl","src/shaders/phong_diffuse_fragment.glsl");
+	auto gouraud_phong   = load_gpu_program("src/shaders/gouraud_Blinn-Phong_vertex.glsl","src/shaders/gouraud_Blinn-Phong_fragment.glsl");
+	auto gouraud_diffuse = load_gpu_program("src/shaders/gouraud_diffuse_vertex.glsl","src/shaders/gouraud_diffuse_fragment.glsl");
+	auto wire_renderer   = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
+	auto menu_renderer   = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
 
 	log("load meshes");
 	
@@ -76,7 +79,7 @@ void game_loop(GLFWwindow *window){
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, pawn_mesh));
+	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),phong_phong, pawn_mesh));
 	pawn->set_wire_mesh(cylinder_wire_mesh);
 	pawn->set_wire_renderer(wire_renderer);
 	pawn->set_bbox_type(entity::BBoxType::Cylinder);
@@ -87,7 +90,7 @@ void game_loop(GLFWwindow *window){
 
 	std::unique_ptr<controler::Generator> game_generator(
 		new controler::Generator(
-			gpu_program, wire_renderer,
+			phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
 			10,10
 		)
@@ -113,7 +116,8 @@ void game_loop(GLFWwindow *window){
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
 		pawn,
-		gpu_program, wire_renderer, menu_renderer,
+		phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse,
+		wire_renderer, menu_renderer,
 		&g_keys, &g_look_at_parameters,
 		&g_angles, &g_cursor,
 		&g_ScreenRatio, &g_Paused);

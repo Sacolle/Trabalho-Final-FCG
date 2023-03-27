@@ -25,7 +25,10 @@ namespace controler{
 	class Generator{
 		public:
 			Generator(
-				std::shared_ptr<render::GPUprogram> gpu_program,
+				std::shared_ptr<render::GPUprogram> phong_phong,
+				std::shared_ptr<render::GPUprogram> phong_diffuse,
+				std::shared_ptr<render::GPUprogram> gouraud_phong,
+				std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 				std::shared_ptr<render::GPUprogram> wire_renderer,
 				std::shared_ptr<render::WireMesh> cube_wire_mesh,
 				std::shared_ptr<render::WireMesh> cylinder_wire_mesh,
@@ -51,7 +54,10 @@ namespace controler{
 
 			std::unordered_map<int, std::shared_ptr<render::Mesh>> meshes;
 
-			std::shared_ptr<render::GPUprogram> gpu_program;
+			std::shared_ptr<render::GPUprogram> phong_phong;
+			std::shared_ptr<render::GPUprogram> phong_diffuse;
+			std::shared_ptr<render::GPUprogram> gouraud_phong;
+			std::shared_ptr<render::GPUprogram> gouraud_diffuse;
 			std::shared_ptr<render::GPUprogram> wire_renderer;
 
 			std::shared_ptr<render::WireMesh> cube_wire_mesh;

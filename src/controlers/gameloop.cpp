@@ -4,7 +4,10 @@ namespace controler{
 		std::unique_ptr<CollisionMap> _collision_map,
 		std::unique_ptr<Generator> _generator,
 		std::shared_ptr<entity::Player> _player,
-		std::shared_ptr<render::GPUprogram> gpu_program,
+		std::shared_ptr<render::GPUprogram> phong_phong,
+		std::shared_ptr<render::GPUprogram> phong_diffuse,
+		std::shared_ptr<render::GPUprogram> gouraud_phong,
+		std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 		std::shared_ptr<render::GPUprogram> wire_renderer,
 		std::shared_ptr<render::GPUprogram> menu_renderer,
 		entity::PressedKeys *pressed_keys,
@@ -14,7 +17,9 @@ namespace controler{
 		float *screen_ratio, bool *paused):
 		camera(std::move(_camera)), collision_map(std::move(_collision_map)), generator(std::move(_generator)),
 		player(_player),
-		gpu_program(gpu_program), wire_renderer(wire_renderer), menu_renderer(menu_renderer),
+		phong_phong(phong_phong), phong_diffuse(phong_diffuse),
+		gouraud_phong(gouraud_phong), gouraud_diffuse(gouraud_diffuse),
+		wire_renderer(wire_renderer), menu_renderer(menu_renderer),
 		pressed_keys(pressed_keys), look_at_param(look_at_param),
 		rotation_angles(rotation_angles), cursor(cursor),
 		screen_ratio(screen_ratio), paused(paused)
@@ -208,21 +213,29 @@ namespace controler{
 	}
 
 	auto GameLoop::render_frame() -> void {
-		gpu_program->use_prog();
-		gpu_program->set_mtx("view",camera->get_view_ptr());
-		gpu_program->set_mtx("projection",camera->get_projection_ptr());
-
+		phong_phong->use_prog();
+		phong_phong->set_mtx("view",camera->get_view_ptr());
+		phong_phong->set_mtx("projection",camera->get_projection_ptr());
 		const auto p_trans = player->get_transform();
 		player->draw(p_trans);
+		gouraud_phong->use_prog();
+		gouraud_phong->set_mtx("view",camera->get_view_ptr());
+		gouraud_phong->set_mtx("projection",camera->get_projection_ptr());
 		for(auto enemy: enemies){
 			enemy->draw(enemy->get_transform());
 		}
+		phong_diffuse->use_prog();
+		phong_diffuse->set_mtx("view",camera->get_view_ptr());
+		phong_diffuse->set_mtx("projection",camera->get_projection_ptr());
 		for(auto wall: walls){
 			wall->draw(wall->get_transform());
 		}
 		for(auto game_event : game_events){
 			game_event->draw(game_event->get_transform());
 		}
+		gouraud_diffuse->use_prog();
+		gouraud_diffuse->set_mtx("view",camera->get_view_ptr());
+		gouraud_diffuse->set_mtx("projection",camera->get_projection_ptr());
 		for(auto bg : background){
 			bg->draw(bg->get_transform());
 		}

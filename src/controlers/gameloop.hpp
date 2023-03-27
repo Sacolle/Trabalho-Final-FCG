@@ -32,7 +32,10 @@ namespace controler{
 			std::unique_ptr<CollisionMap> _collision_map,
 			std::unique_ptr<Generator> _generator,
 			std::shared_ptr<entity::Player> _player,
-			std::shared_ptr<render::GPUprogram> gpu_program,
+			std::shared_ptr<render::GPUprogram> phong_phong,
+			std::shared_ptr<render::GPUprogram> phong_diffuse,
+			std::shared_ptr<render::GPUprogram> gouraud_phong,
+			std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 			std::shared_ptr<render::GPUprogram> wire_renderer,
 			std::shared_ptr<render::GPUprogram> menu_renderer,
 			entity::PressedKeys *pressed_keys,
@@ -88,7 +91,10 @@ namespace controler{
 		std::unordered_set<std::shared_ptr<entity::Entity>> background;
 
 		//render stuff
-		std::shared_ptr<render::GPUprogram> gpu_program;
+		std::shared_ptr<render::GPUprogram> phong_phong;
+		std::shared_ptr<render::GPUprogram> phong_diffuse;
+		std::shared_ptr<render::GPUprogram> gouraud_phong;
+		std::shared_ptr<render::GPUprogram> gouraud_diffuse;
 		std::shared_ptr<render::GPUprogram> wire_renderer;
 		std::shared_ptr<render::GPUprogram> menu_renderer;
 
