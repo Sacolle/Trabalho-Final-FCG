@@ -75,13 +75,12 @@ namespace entity{
 		}
 		if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
 
-		const float pi = 3.141592f;
 		const auto base_dir = get_base_direction();
 		//como gerar o angulo baseado nos vetores de 0 a 2pi
 		//https://math.stackexchange.com/a/2234559
 		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
 
-		return angle < 0 ? angle + 2*pi : angle;
+		return angle < 0 ? angle + 2*PI : angle;
 	}
 	auto Player::take_damage(int amount) -> void {
 		life_points -= amount;
