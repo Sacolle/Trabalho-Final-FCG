@@ -16,6 +16,7 @@
 //minhas implementações
 #include "renders/shader.hpp"
 #include "utils/matrix.hpp"
+#include "utils/animation.hpp"
 #include "entities/entity.hpp"
 #include "entities/camera.hpp"
 #include "entities/screen.hpp"
@@ -31,7 +32,7 @@
 #define PHIMAX PI/2
 #define PHIMIN 0
 
-auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>;
+auto load_mesh(const char * file, const char * mat) -> std::shared_ptr<render::Mesh>;
 auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr<render::GPUprogram>;
 
 void print_exception(const std::exception& e, int level);
@@ -65,28 +66,45 @@ void game_loop(GLFWwindow *window){
 
 	log("load meshes");
 	
-	auto main_menu_mesh = load_mesh("models/main_menu.obj");
-	auto new_game_menu_item_mesh = load_mesh("models/new_game_menu_item.obj");
+	auto menu_screen_mesh = load_mesh("models/menu_screen.obj", "models/materials");
+	auto game_over_screen_mesh = load_mesh("models/game_over_screen.obj", "models/materials");
+	auto game_win_screen_mesh = load_mesh("models/game_win_screen.obj", "models/materials");
+	auto credits_screen_mesh = load_mesh("models/credits_screen.obj", "models/materials");
+	//node meshes
+	auto new_game_menu_item_mesh = load_mesh("models/new_game_menu_item.obj", "models/materials");
+	auto exit_game_menu_item_mesh = load_mesh("models/exit_game_item_menu.obj", "models/materials");
+	auto main_menu_menu_item_mesh = load_mesh("models/main_menu_item_menu.obj", "models/materials");
+	auto retry_menu_item_mesh = load_mesh("models/retry_item_menu.obj", "models/materials");
+	auto credits_menu_item_mesh = load_mesh("models/credits_item_menu.obj", "models/materials");
+	auto resgatar_premio_menu_item_mesh = load_mesh("models/resgatar_premio_item_menu.obj", "models/materials");
+	auto zumbi_menu_item_mesh = load_mesh("models/zumbi_item_menu.obj", "models/materials");
 
-	auto cube_mesh = load_mesh("models/cube.obj");
-	auto pawn_mesh = load_mesh("models/pawn.obj");
-	auto house_mesh = load_mesh("models/house.obj");
-	auto grass_tile_mesh = load_mesh("models/grass_tile.obj");
-	auto horizontal_road_tile_mesh = load_mesh("models/horizontal_road_tile.obj");
-	auto vertical_road_tile_mesh = load_mesh("models/vertical_road_tile.obj");
-	auto cross_section_tile_mesh = load_mesh("models/cross_section_tile.obj");
+	auto cube_mesh = load_mesh("models/cube.obj", "models/materials");
+	auto pawn_mesh = load_mesh("models/pawn.obj", "models/materials");
+	
+	auto character_mesh = load_mesh("models/complex-models/character.obj", "models/complex-models");
+	auto zombie1_mesh = load_mesh("models/complex-models/zombie1.obj", "models/complex-models");
+	auto carro_mesh = load_mesh("models/complex-models/carro.obj", "models/complex-models");
+
+	auto house_mesh = load_mesh("models/house.obj", "models/materials");
+	auto grass_tile_mesh = load_mesh("models/grass_tile.obj", "models/materials");
+	auto horizontal_road_tile_mesh = load_mesh("models/horizontal_road_tile.obj", "models/materials");
+	auto vertical_road_tile_mesh = load_mesh("models/vertical_road_tile.obj", "models/materials");
+	auto cross_section_tile_mesh = load_mesh("models/cross_section_tile.obj", "models/materials");
 
 	log("init enities");
 
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-	std::shared_ptr<entity::Player> pawn(new entity::Player(glm::vec4(0,0,-6,1),phong_phong, pawn_mesh));
-	pawn->set_wire_mesh(cylinder_wire_mesh);
-	pawn->set_wire_renderer(wire_renderer);
-	pawn->set_bbox_type(entity::BBoxType::Cylinder);
-	pawn->set_bbox_size(2.0f,1.0f,2.0f);  
-	pawn->set_speed(0.1f);
+	std::shared_ptr<entity::Player> player(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, character_mesh));
+	player->set_wire_mesh(cylinder_wire_mesh);
+	player->set_wire_renderer(wire_renderer);
+	player->set_bbox_type(entity::BBoxType::Cylinder);
+	player->set_scale(0.03f,0.03f,0.03f);
+	player->set_base_direction(glm::vec4(0.0f,0.0f,1.0f,0.0f));
+	player->set_bbox_size(1.0f,1.0f,1.0f);  
+	player->set_speed(0.1f);
 
 	//pawn->set_base_translate(0.0f,3.0f,0.0f);
 
@@ -94,13 +112,13 @@ void game_loop(GLFWwindow *window){
 		new controler::Generator(
 			phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
-			10,10
+			5,5
 		)
 	);
 	//ading the meshes
-	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::ENEMY),pawn_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::ENEMY),zombie1_mesh);
 	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::POINT),cube_mesh);
-	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::CAR),cube_mesh);
+	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::CAR),carro_mesh);
 	game_generator->insert_mesh(static_cast<int>(controler::MeshIds::HOUSE),house_mesh);
 
 	//' ','+','|','-','#'
@@ -114,7 +132,7 @@ void game_loop(GLFWwindow *window){
 	log("inicializando o controler");
 
 	controler::GameLoop game_controler(
-		std::unique_ptr<entity::Camera>(new entity::Camera(pawn->get_cords())),
+		std::unique_ptr<entity::Camera>(new entity::Camera(player->get_cords())),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
 		pawn,
@@ -126,11 +144,57 @@ void game_loop(GLFWwindow *window){
 
 	log("inserindo o inimigo");
 
-	std::shared_ptr<entity::Screen> menu_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, main_menu_mesh));
-	std::shared_ptr<entity::Node> start_node(new entity::Node(glm::vec4(0.0f,0.0f,0.1f,1.0f), menu_renderer, new_game_menu_item_mesh,entity::MenuOptions::Play));
-	menu_screen->insert_nodes(start_node,464,362,24,776,800,800);
+	//screens
+	//menu screen
+	std::shared_ptr<entity::Screen> menu_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, menu_screen_mesh));
+	//game_over
+	std::shared_ptr<entity::Screen> game_over_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, game_over_screen_mesh));
+	//game_win
+	std::shared_ptr<entity::Screen> game_win_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, game_win_screen_mesh));
+	//credits
+	std::shared_ptr<entity::Screen> credits_screen(new entity::Screen(glm::vec4(0.0f,0.0f,0.0f,1.0f), menu_renderer, credits_screen_mesh));
+	
+	//nodes
+	std::shared_ptr<entity::Node> start_node(new entity::Node(glm::vec4(0.0f,-0.4f,0.1f,1.0f), menu_renderer, new_game_menu_item_mesh, entity::MenuOptions::Play));
+	std::shared_ptr<entity::Node> exit_node(new entity::Node(glm::vec4(0.0f,-0.65f,0.1f,1.0f), menu_renderer, exit_game_menu_item_mesh, entity::MenuOptions::Exit));
+	std::shared_ptr<entity::Node> menu_node(new entity::Node(glm::vec4(0.0f,-0.65f,0.1f,1.0f), menu_renderer, main_menu_menu_item_mesh, entity::MenuOptions::ToMenu));
+	std::shared_ptr<entity::Node> retry_node(new entity::Node(glm::vec4(0.0f,-0.4f,0.1f,1.0f), menu_renderer, retry_menu_item_mesh, entity::MenuOptions::Retry));
+	std::shared_ptr<entity::Node> credits_node(new entity::Node(glm::vec4(0.0f,-0.4f,0.1f,1.0f), menu_renderer, credits_menu_item_mesh, entity::MenuOptions::Credits));
+	std::shared_ptr<entity::Node> premio_node(new entity::Node(glm::vec4(0.0f,-0.4f,0.1f,1.0f), menu_renderer, resgatar_premio_menu_item_mesh, entity::MenuOptions::RickRoll));
+	
+	std::shared_ptr<entity::Node> zumbi_node(new entity::Node(glm::vec4(0.0f,0.0f,0.1f,1.0f), menu_renderer, zumbi_menu_item_mesh, entity::MenuOptions::None));
+	zumbi_node->set_scale(0.2f,0.2f,1.0f);
+
+	std::unique_ptr<utils::Animation> bezier_animation(
+		new utils::Bezier3(
+			200,
+			glm::vec3(-1.0f,-0.15f,0.1f),
+			glm::vec3(0.5f,0.3f,0.1f),
+			glm::vec3(-0.5f,0.3f,0.1f),
+			glm::vec3(1.0f,-0.15f,0.1f)
+		)
+	);
+	zumbi_node->set_animation(std::move(bezier_animation));
+
+	//add the nodes to their respective screens
+	
+	menu_screen->insert_nodes(start_node,662,560,20,778,800,800);
+	menu_screen->insert_nodes(exit_node,781,682,20,778,800,800);
+	menu_screen->insert_nodes(zumbi_node,1,1,1,1,800,800);
+
+	game_over_screen->insert_nodes(retry_node,662,560,20,778,800,800);
+	game_over_screen->insert_nodes(menu_node,781,682,20,778,800,800);
+
+	game_win_screen->insert_nodes(credits_node,662,560,20,778,800,800);
+	game_win_screen->insert_nodes(menu_node,781,682,20,778,800,800);
+
+	credits_screen->insert_nodes(premio_node,662,560,20,778,800,800);
+	credits_screen->insert_nodes(menu_node,781,682,20,778,800,800);
 
 	game_controler.insert_screen(controler::GameState::MainMenu, menu_screen);
+	game_controler.insert_screen(controler::GameState::GameOver, game_over_screen);
+	game_controler.insert_screen(controler::GameState::GameWin, game_win_screen);
+	game_controler.insert_screen(controler::GameState::Credits, credits_screen);
 
 	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
@@ -227,11 +291,11 @@ auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr
 	return renderer;
 }
 
-auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>{
+auto load_mesh(const char * file, const char * mats) -> std::shared_ptr<render::Mesh>{
 	render::ParsedObjMesh load_mesh;
 	std::shared_ptr<render::Mesh> res;
 	try{
-		load_mesh.load_obj_file(file, "models/materials");
+		load_mesh.load_obj_file(file, mats);
 		res = load_mesh.load_to_gpu();
 	}catch(const std::exception& e){
 		print_exception(e,0);

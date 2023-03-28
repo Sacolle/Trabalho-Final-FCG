@@ -51,6 +51,7 @@ namespace controler{
 			auto get_quadrant(std::pair<int,int> key) -> std::vector<std::forward_list<Entt>*>;
 
 			auto log() const -> void;
+			auto clear() -> void;
 			//auto get_quadrant(std::pair<int,int> key, int mask) -> NeighborIter;
 		private:
 			//have it at minimum the size of the biggest enemy
@@ -76,6 +77,7 @@ namespace controler{
 			auto insert_mover(Entt entity) -> int;
 			auto remove_mover(Entt entity) -> int;
 
+			auto clear() -> void;
 			//auto colide_foward(Entt entity) -> bool;
 			auto colide_direction(Entt entity, const glm::vec4 direction) -> Entt;
 		private:
