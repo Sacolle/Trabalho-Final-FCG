@@ -18,7 +18,7 @@ namespace controler{
 	):phong_phong(phong_phong), phong_diffuse(phong_diffuse),
 	gouraud_phong(gouraud_phong), gouraud_diffuse(gouraud_diffuse), wire_renderer(wire_renderer),
 	cube_wire_mesh(cube_wire_mesh), cylinder_wire_mesh(cylinder_wire_mesh),
-	map_size(size), tile_size(tile_size), wave_map(WaveFuncMap(map_size, 1)){
+	map_size(size), tile_size(tile_size), wave_map(WaveFuncMap(map_size, 2)){
 	}
 	Generator::~Generator(){}
 

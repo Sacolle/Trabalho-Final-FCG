@@ -116,30 +116,30 @@ namespace controler{
 			const auto action = screen->click_action(cursor->x,cursor->y,800,800);
 			switch (action){
 			case entity::MenuOptions::Play:
-				std::cout << "Play" << std::endl;
+				//std::cout << "Play" << std::endl;
 				state = GameState::Playing;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
 			case entity::MenuOptions::Exit:
-				std::cout << "Exit" << std::endl;
+				//std::cout << "Exit" << std::endl;
 				exit(0);
 				break;
 			case entity::MenuOptions::Retry:
-				std::cout << "Retry" << std::endl;
+				//std::cout << "Retry" << std::endl;
 				state = GameState::Playing;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
 			case entity::MenuOptions::Credits:
-				std::cout << "Credits" << std::endl;
+				//std::cout << "Credits" << std::endl;
 				state = GameState::Credits;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
 			case entity::MenuOptions::ToMenu:
-				std::cout << "ToMenu" << std::endl;
+				//std::cout << "ToMenu" << std::endl;
 				state = GameState::MainMenu;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
@@ -148,7 +148,7 @@ namespace controler{
 				exit(0);
 				break;
 			default:
-				std::cout << "None" << std::endl;
+				//std::cout << "None" << std::endl;
 				break;
 			}
 		}
@@ -159,7 +159,7 @@ namespace controler{
 		}
 		else {
 			if(static_cast<int>(time) % spawn_rate == 0){
-				std::cout << "spawn enemy" << std::endl;
+				//std::cout << "spawn enemy" << std::endl;
 				auto new_enemy = generator->generate_enemy(static_cast<int>(MeshIds::ENEMY));
 				insert_enemy(new_enemy);
 			}
@@ -179,7 +179,7 @@ namespace controler{
 		switch (game_event_type){
 		case entity::GameEventTypes::Point :
 			remove_game_event(game_event);
-			std::cout << ++score << std::endl;
+			//std::cout << ++score << std::endl;
 			break;
 		case entity::GameEventTypes::EndPoint :
 			state = GameState::GameWin;

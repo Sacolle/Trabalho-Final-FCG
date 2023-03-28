@@ -9,10 +9,6 @@
 // Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
-//headers do IMGUI
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
 //minhas implementações
 #include "renders/shader.hpp"
 #include "utils/matrix.hpp"
@@ -55,7 +51,7 @@ WindowSize g_windowSize {WINDOW_WIDTH,WINDOW_HEIGHT};
 entity::PressedKeys g_keys{false, false, false, false};
 void game_loop(GLFWwindow *window){
 
-	log("load shaders");
+	//log("load shaders");
 	//carrega os shaders
 	auto phong_phong     = load_gpu_program("src/shaders/phong_Blinn-Phong_vertex.glsl","src/shaders/phong_Blinn-Phong_fragment.glsl");
 	auto phong_diffuse   = load_gpu_program("src/shaders/phong_diffuse_vertex.glsl","src/shaders/phong_diffuse_fragment.glsl");
@@ -64,7 +60,7 @@ void game_loop(GLFWwindow *window){
 	auto wire_renderer   = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
 	auto menu_renderer   = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
 
-	log("load meshes");
+	//log("load meshes");
 	
 	auto menu_screen_mesh = load_mesh("models/menu_screen.obj", "models/materials");
 	auto game_over_screen_mesh = load_mesh("models/game_over_screen.obj", "models/materials");
@@ -92,7 +88,7 @@ void game_loop(GLFWwindow *window){
 	auto vertical_road_tile_mesh = load_mesh("models/vertical_road_tile.obj", "models/materials");
 	auto cross_section_tile_mesh = load_mesh("models/cross_section_tile.obj", "models/materials");
 
-	log("init enities");
+	//log("init enities");
 
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
@@ -102,9 +98,10 @@ void game_loop(GLFWwindow *window){
 	player->set_wire_renderer(wire_renderer);
 	player->set_bbox_type(entity::BBoxType::Cylinder);
 	player->set_scale(0.03f,0.03f,0.03f);
+	player->set_base_translate(0.0f,-40.0f,0.00f);
 	player->set_base_direction(glm::vec4(0.0f,0.0f,1.0f,0.0f));
 	player->set_bbox_size(1.0f,1.0f,1.0f);  
-	player->set_speed(0.1f);
+	player->set_speed(0.2f);
 
 	//pawn->set_base_translate(0.0f,3.0f,0.0f);
 
@@ -112,7 +109,7 @@ void game_loop(GLFWwindow *window){
 		new controler::Generator(
 			phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
-			20,15
+			10,15
 		)
 	);
 	//ading the meshes
@@ -129,7 +126,7 @@ void game_loop(GLFWwindow *window){
 	game_generator->insert_tile_mesh('-', horizontal_road_tile_mesh); //asphalt
 	game_generator->insert_tile_mesh('C', cross_section_tile_mesh); //asphalt
 
-	log("inicializando o controler");
+	//log("inicializando o controler");
 
 	controler::GameLoop game_controler(
 		std::unique_ptr<entity::Camera>(new entity::Camera(player->get_cords())),
@@ -141,7 +138,7 @@ void game_loop(GLFWwindow *window){
 		&g_keys, &g_look_at_parameters,
 		&g_angles, &g_cursor,
 		&g_ScreenRatio, &g_Paused, window);
-	log("inserindo o inimigo");
+	//log("inserindo o inimigo");
 
 	//screens
 	//menu screen
@@ -195,9 +192,8 @@ void game_loop(GLFWwindow *window){
 	game_controler.insert_screen(controler::GameState::GameWin, game_win_screen);
 	game_controler.insert_screen(controler::GameState::Credits, credits_screen);
 
-	bool render_bbox = false;
 	float last_frame = (float)glfwGetTime();
-	log("iniciando o loop de render");
+	//log("iniciando o loop de render");
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -205,24 +201,11 @@ void game_loop(GLFWwindow *window){
 		float now = (float)glfwGetTime();
 		float delta_time = (now - last_frame) * TARGET_FRAME_RATE;
 		last_frame = now;
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		{
-			ImGui::Begin("Camera Movement");
-            ImGui::SliderFloat("phi", &g_look_at_parameters.phi, 0.0f, 3.14f);
-            ImGui::SliderFloat("theta", &g_look_at_parameters.theta, 0.0f, 3.14f);
-            ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 40.0f);
-			ImGui::Checkbox("render bbox", &render_bbox);
-			ImGui::End();
-		}
 	    glClearColor(0.04f, 0.04f, 0.1f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		game_controler.update(delta_time);
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
 }
@@ -258,21 +241,14 @@ int main(int argc, char** argv)
         std::exit(EXIT_FAILURE);
 	}
 	srand(time(0));
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsClassic();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
     glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
 	game_loop(window);
 
     // Finalizamos o uso dos recursos do sistema operacional
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 	glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
@@ -329,8 +305,9 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
 	}
 	else{
     	float phi_aux = g_look_at_parameters.phi + 0.01f*dy;
-    	if (phi_aux < PHIMAX && phi_aux > PHIMIN)
+    	if (phi_aux < PHIMAX && phi_aux > PHIMIN){
         	g_look_at_parameters.phi = phi_aux;
+		}
 		g_look_at_parameters.theta -= 0.01f*dx;
 	}
 }
