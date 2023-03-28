@@ -41,11 +41,11 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4  flashlight_pos = player_pos;
     vec4  camera_dir = player_pos - camera_position;
     camera_dir.y = 0;
     vec4  flashlight_dir   = normalize(camera_dir);
-    float flashlight_range = 30.0;
+    vec4  flashlight_pos   = player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * 8;
+    float flashlight_range = 50.0;
     float flashlight_angle = radians(15.0);
     vec4  light_pos   = player_pos + vec4(0.0,30.0,0.0,0.0);
     vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
@@ -63,7 +63,7 @@ void main()
     vec3 I  = vec3(0.7, 0.7, 0.7);
 
     // Espectro da luz ambiente
-    vec3 Ia = vec3(0.3, 0.1, 0.1);
+    vec3 Ia = vec3(0.04, 0.04, 0.1);
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
@@ -79,16 +79,30 @@ void main()
     }
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso, especular, e ambiente.
-    bool iluminado_spotlight  = true;
-    bool iluminado_flashlight = true;
-    if(dot(normalize(world_pos - light_pos),light_dir) < cos(light_angle))
+    bool  iluminado_spotlight  = true;
+    bool  iluminado_flashlight = true;
+    float spotlight_on_pixel   = dot(normalize(world_pos - light_pos),light_dir);
+    float flashlight_on_pixel  = dot(normalize(world_pos - flashlight_pos),flashlight_dir);
+    float spotlight_cut_off    = cos(light_angle);
+    float flashlight_cut_off   = cos(flashlight_angle);
+    float flashlight_distance  = length(world_pos - flashlight_pos);
+    if(spotlight_on_pixel < spotlight_cut_off)
         iluminado_spotlight  = false;
-    if(dot(normalize(world_pos - flashlight_pos),flashlight_dir) < cos(flashlight_angle) || length(world_pos - flashlight_pos) > flashlight_range)
+    if(flashlight_on_pixel < flashlight_cut_off || flashlight_distance > flashlight_range)
         iluminado_flashlight = false;
     if(!iluminado_spotlight && !iluminado_flashlight)
-        color_v.rgb = ambient_term;
-    else
-        color_v.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+        color_v.rgb = ambient_term + lambert_diffuse_term * 0.1;
+    else{
+        float intensity_flashlight = 0.0, intensity_spotlight = 0.0;
+        if(iluminado_flashlight){
+            intensity_flashlight = 1.0 - (1 - flashlight_on_pixel) / (1 - flashlight_cut_off);
+            intensity_flashlight = min(intensity_flashlight, 1.0 - (1 - flashlight_distance) / (1 - flashlight_range));
+        }
+        if(iluminado_spotlight)
+            intensity_spotlight  = 1.0 - (1 - spotlight_on_pixel) / (1 - spotlight_cut_off);
+        float intensity = max(intensity_flashlight, intensity_spotlight);
+        color_v.rgb = (lambert_diffuse_term + phong_specular_term) * intensity + ambient_term + lambert_diffuse_term * 0.1;
+    }
 
 	gl_Position = projection * view * model_transform * pos;
 }

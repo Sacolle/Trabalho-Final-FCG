@@ -3,6 +3,9 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+// Headers das bibliotecas OpenGL
+#include <glad/glad.h>   // Criação de contexto OpenGL 3.3
+#include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
 
 #include "../entities/entity.hpp"
 #include "../entities/camera.hpp"
@@ -41,8 +44,8 @@ namespace controler{
 			entity::LookAtParameters *look_at_param,
 			entity::RotationAngles *rotation_angles,
 			CursorState *cursor,
-			float *screen_ratio, bool *paused);  
-
+			float *screen_ratio, bool *paused,
+			GLFWwindow *window);  
 		~GameLoop();
 		/*updates to the next gameMoment*/ 
 		auto update(float delta_time) -> void; 
@@ -122,5 +125,7 @@ namespace controler{
 		float speed_increasse = 0.0025f;
 
 		bool draw_bbox = true;
+
+		GLFWwindow *window;
 	};
 }

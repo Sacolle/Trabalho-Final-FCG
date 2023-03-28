@@ -24,7 +24,8 @@ namespace controler{
 		entity::LookAtParameters *look_at_param,
 		entity::RotationAngles *rotation_angles,
 		CursorState *cursor,
-		float *screen_ratio, bool *paused):
+		float *screen_ratio, bool *paused,
+		GLFWwindow *window):
 		camera(std::move(_camera)), collision_map(std::move(_collision_map)), generator(std::move(_generator)),
 		player(_player),
 		phong_phong(phong_phong), phong_diffuse(phong_diffuse),
@@ -32,7 +33,8 @@ namespace controler{
 		wire_renderer(wire_renderer), menu_renderer(menu_renderer),
 		pressed_keys(pressed_keys), look_at_param(look_at_param),
 		rotation_angles(rotation_angles), cursor(cursor),
-		screen_ratio(screen_ratio), paused(paused)
+		screen_ratio(screen_ratio), paused(paused),
+		window(window)
 	{
 		collision_map->insert_mover(player);
 	} 
@@ -116,6 +118,7 @@ namespace controler{
 			case entity::MenuOptions::Play:
 				std::cout << "Play" << std::endl;
 				state = GameState::Playing;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
@@ -126,16 +129,19 @@ namespace controler{
 			case entity::MenuOptions::Retry:
 				std::cout << "Retry" << std::endl;
 				state = GameState::Playing;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
 			case entity::MenuOptions::Credits:
 				std::cout << "Credits" << std::endl;
 				state = GameState::Credits;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
 			case entity::MenuOptions::ToMenu:
 				std::cout << "ToMenu" << std::endl;
 				state = GameState::MainMenu;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
 			case entity::MenuOptions::RickRoll:
 				std::cout << "https://youtu.be/dQw4w9WgXcQ" << std::endl;
@@ -177,9 +183,11 @@ namespace controler{
 			break;
 		case entity::GameEventTypes::EndPoint :
 			state = GameState::GameWin;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			break;
 		case entity::GameEventTypes::GameOver :
 			state = GameState::GameOver;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			break;
 		default:
 			break;

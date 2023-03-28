@@ -97,7 +97,7 @@ void game_loop(GLFWwindow *window){
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-	std::shared_ptr<entity::Player> player(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, character_mesh));
+	std::shared_ptr<entity::Player> player(new entity::Player(glm::vec4(0,0,-6,1),phong_phong, character_mesh));
 	player->set_wire_mesh(cylinder_wire_mesh);
 	player->set_wire_renderer(wire_renderer);
 	player->set_bbox_type(entity::BBoxType::Cylinder);
@@ -112,7 +112,7 @@ void game_loop(GLFWwindow *window){
 		new controler::Generator(
 			phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
-			5,5
+			20,15
 		)
 	);
 	//ading the meshes
@@ -135,13 +135,12 @@ void game_loop(GLFWwindow *window){
 		std::unique_ptr<entity::Camera>(new entity::Camera(player->get_cords())),
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
-		pawn,
+		player,
 		phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse,
 		wire_renderer, menu_renderer,
 		&g_keys, &g_look_at_parameters,
 		&g_angles, &g_cursor,
-		&g_ScreenRatio, &g_Paused);
-
+		&g_ScreenRatio, &g_Paused, window);
 	log("inserindo o inimigo");
 
 	//screens
@@ -217,7 +216,7 @@ void game_loop(GLFWwindow *window){
 			ImGui::Checkbox("render bbox", &render_bbox);
 			ImGui::End();
 		}
-	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
+	    glClearColor(0.04f, 0.04f, 0.1f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		game_controler.update(delta_time);
@@ -366,10 +365,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	}
 	if(key == GLFW_KEY_P && action == GLFW_PRESS){
 		g_Paused = !g_Paused;
-		if(g_Paused)
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		else
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }
 //Função para a redimensão da janela
