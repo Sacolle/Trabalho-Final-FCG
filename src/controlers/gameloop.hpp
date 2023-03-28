@@ -14,11 +14,10 @@
 
 namespace controler{
 	enum class GameState{
-		Loading,
 		MainMenu,
 		GameOver,
 		GameWin,
-		Options,
+		Credits,
 		Playing
 	};
 	typedef struct CursorState{
@@ -61,7 +60,7 @@ namespace controler{
 		auto render_frame() -> void;
 		auto render_bbox() -> void;
 
-		auto update_menu() -> void;
+		auto update_screen(GameState type) -> void;
 		auto update_playing(float delta_time) -> void;
 		
 		auto setup_playing_state() -> void;
@@ -110,6 +109,7 @@ namespace controler{
 
 		int score;
 		float time = 0;
+		float cursor_delay = 0;
 		int spawn_rate = 200;
 
 		int speed_increasse_rate = 200;

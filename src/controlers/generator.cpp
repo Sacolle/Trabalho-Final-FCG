@@ -82,9 +82,10 @@ namespace controler{
 					);
 					car->set_wire_mesh(cube_wire_mesh);
 					car->set_wire_renderer(wire_renderer);
-
-					car->set_scale(2.0f,1.0f,1.0f);
-					car->set_bbox_size(2.0f,1.0f,1.0f);
+					car->set_angles(0,1.5707f,0);
+					car->set_base_translate(-0.03f,0.05f,0.0f);
+					car->set_scale(10.0f,10.0f,10.0f);
+					car->set_bbox_size(7.0f,1.0f,3.0f);
 
 					result.game_events.push_back(car);
 
@@ -157,8 +158,10 @@ namespace controler{
 		enemy->set_wire_mesh(cylinder_wire_mesh);
 		enemy->set_wire_renderer(wire_renderer);
 
-		enemy->set_bbox_size(2.0f,1.0f,2.0f);
+		enemy->set_scale(0.2f,0.2f,0.2f);
+		enemy->set_base_direction(glm::vec4(0.0f,0.0f,1.0f,0.0f));
 		enemy->set_bbox_type(entity::BBoxType::Cylinder);
+		enemy->set_bbox_size(1.0f,2.0f,1.0f);
 
 		enemy->set_speed(0.05f);
 

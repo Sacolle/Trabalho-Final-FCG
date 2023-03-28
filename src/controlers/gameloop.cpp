@@ -1,5 +1,15 @@
 #include "gameloop.hpp"
 namespace controler{
+	inline auto outside_map(std::shared_ptr<entity::Player> player, const glm::vec4 dir, const float map_size, const float tile_size) -> bool{
+		const auto pos = player->get_cords() + dir;
+		const float bx = player->get_x_radius();
+		const float bz = player->get_z_radius();
+		const float max_border = map_size * (2 * tile_size) - (tile_size / 2) ;
+		const float min_border = -(tile_size / 2);
+
+		return (pos.x < min_border + bx) || (pos.x > max_border - bx) || (pos.z < min_border + bz) || (pos.z > max_border - bz);
+	}
+
 	GameLoop::GameLoop(std::unique_ptr<entity::Camera> _camera,
 		std::unique_ptr<CollisionMap> _collision_map,
 		std::unique_ptr<Generator> _generator,
@@ -25,29 +35,24 @@ namespace controler{
 
 	GameLoop::~GameLoop(){}
 	auto GameLoop::update(float delta_time) -> void {
+		time += delta_time;
+		cursor_delay += delta_time;
 		switch (state){
 		case GameState::MainMenu :
 			/* render the menu screen */
-			update_menu();
-			//setup_playing_state();
-			//std::cout << "generated map" << std::endl;
-			//state = GameState::Playing;
-			break;
-		case GameState::Options :
-			/* render the options screen */
-			break;
-		case GameState::Loading :
-			/* render a loading screen while assets load */
+			update_screen(GameState::MainMenu);
 			break;
 		case GameState::GameOver :
 			/* render the gameOver screen */
-			std::cout << "Você perdeu" << std::endl;
-			exit(0);
+			update_screen(GameState::GameOver);
 			break;
 		case GameState::GameWin :
 			/* render the gameOver screen */
-			std::cout << "Você ganhou" << std::endl;
-			exit(0);
+			update_screen(GameState::GameWin);
+			break;
+		case GameState::Credits :
+			/* render the gameOver screen */
+			update_screen(GameState::Credits);
 			break;
 		case GameState::Playing :
 			update_playing(delta_time);
@@ -74,6 +79,7 @@ namespace controler{
 		collision_map->remove_mover(player);
 		player->set_cords(valid_position.x, valid_position.y, valid_position.z);
 		collision_map->insert_mover(player);
+		time = 0;
 	}
 	auto GameLoop::clear_playing_state() -> void {
 		score = 0;
@@ -82,10 +88,10 @@ namespace controler{
 		game_events.clear();
 		walls.clear();
 		background.clear();
+		collision_map->clear();
 	}
 
-	auto GameLoop::update_menu() -> void {
-		
+	auto GameLoop::update_screen(GameState type) -> void {
 		entity::LookAtParameters menu_view{0,0,1.5};
 		camera->update_position(menu_view, glm::vec4(0.0f,0.0f,0.0f,1.0f));
 		camera->update_aspect_ratio(*screen_ratio);
@@ -94,26 +100,41 @@ namespace controler{
 		menu_renderer->set_mtx("view",camera->get_view_ptr());
 		menu_renderer->set_mtx("projection",camera->get_projection_ptr());
 
-		const auto menu_screen = screens.at(GameState::MainMenu);
-		menu_screen->draw(menu_screen->get_transform());
-		menu_screen->draw_nodes();
-		if(cursor->clicked){
-			std::cout << "x: " << cursor->x << " y: " << cursor->y << std::endl;
-			const auto action = menu_screen->click_action(cursor->x,cursor->y,800,800);
+		const auto screen = screens.at(type);
+		screen->draw(screen->get_transform());
+		screen->draw_nodes(time);
+		if(cursor->clicked && (cursor_delay > 25)){
+			cursor_delay = 0;
+			//std::cout << "x: " << cursor->x << " y: " << cursor->y << std::endl;
+			const auto action = screen->click_action(cursor->x,cursor->y,800,800);
 			switch (action){
 			case entity::MenuOptions::Play:
 				std::cout << "Play" << std::endl;
 				state = GameState::Playing;
+				clear_playing_state();
 				setup_playing_state();
 				break;
 			case entity::MenuOptions::Exit:
-				std::cout << "Thanks for Playing" << std::endl;
+				std::cout << "Exit" << std::endl;
 				exit(0);
 				break;
 			case entity::MenuOptions::Retry:
+				std::cout << "Retry" << std::endl;
 				state = GameState::Playing;
 				clear_playing_state();
 				setup_playing_state();
+				break;
+			case entity::MenuOptions::Credits:
+				std::cout << "Credits" << std::endl;
+				state = GameState::Credits;
+				break;
+			case entity::MenuOptions::ToMenu:
+				std::cout << "ToMenu" << std::endl;
+				state = GameState::MainMenu;
+				break;
+			case entity::MenuOptions::RickRoll:
+				std::cout << "https://youtu.be/dQw4w9WgXcQ" << std::endl;
+				exit(0);
 				break;
 			default:
 				std::cout << "None" << std::endl;
@@ -126,15 +147,12 @@ namespace controler{
 			update_camera_free(delta_time);
 		}
 		else {
-			time += delta_time;
 			if(static_cast<int>(time) % spawn_rate == 0){
 				std::cout << "spawn enemy" << std::endl;
 				auto new_enemy = generator->generate_enemy(static_cast<int>(MeshIds::ENEMY));
 				insert_enemy(new_enemy);
 			}
-
 			update_camera_look_at();
-			//std::cout << "update player" << std::endl;
 			const auto event_player = update_player(delta_time,*pressed_keys);
 			handle_event(event_player.first, event_player.second);
 			const auto event_enemies = update_enemies(delta_time);
@@ -260,7 +278,9 @@ namespace controler{
 			const auto player_dx = player->get_parcial_direction_x();
 			const auto collided_with_dx = collision_map->colide_direction(player,player_dx);
 			if(collided_with_dx == nullptr){
-				player->translate_direction(player_dx, delta_time);
+				if(!outside_map(player, player_dx, generator->get_map_size(), generator->get_tile_size())){
+					player->translate_direction(player_dx, delta_time);
+				}
 			}else{
 				const auto resulting_event = collided_with_dx->collide(player, delta_time);
 				if(is_game_event_event(resulting_event)){
@@ -270,10 +290,13 @@ namespace controler{
 					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
 				} 
 			}
+
 			const auto player_dz = player->get_parcial_direction_z();
 			const auto collided_with_dz = collision_map->colide_direction(player,player_dz);
 			if(collided_with_dz == nullptr){
-				player->translate_direction(player_dz, delta_time);
+				if(!outside_map(player, player_dz, generator->get_map_size(), generator->get_tile_size())){
+					player->translate_direction(player_dz, delta_time);
+				}
 			}else{
 				const auto resulting_event = collided_with_dz->collide(player, delta_time);
 				if(is_game_event_event(resulting_event)){
@@ -282,6 +305,7 @@ namespace controler{
 					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
 				} 
 			}
+
 			collision_map->insert_mover(player);
 		}
 		return std::make_pair(entity::GameEventTypes::None, nullptr);

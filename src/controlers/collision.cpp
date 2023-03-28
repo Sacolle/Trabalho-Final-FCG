@@ -46,6 +46,10 @@ namespace controler{
 		return out;
 	}
 
+	auto SpacialHash::clear() -> void {
+		map.clear();
+	}
+
 	auto SpacialHash::log() const -> void {
 		std::cout << "cell size x: " << cell_x << " y: " << cell_y << std::endl;
 	}
@@ -55,8 +59,13 @@ namespace controler{
 		mover_map(SpacialHash(max_width/mover_cell_grain, max_depth/mover_cell_grain)),
 		obj_map(SpacialHash(max_width/obj_cell_grain, max_depth/obj_cell_grain))
 	{
-		mover_map.log();
-		obj_map.log();
+		//mover_map.log();
+		//obj_map.log();
+	}
+
+	auto CollisionMap::clear() -> void {
+		mover_map.clear();
+		obj_map.clear();
 	}
 
 	auto CollisionMap::insert_obj(Entt obj) -> int {

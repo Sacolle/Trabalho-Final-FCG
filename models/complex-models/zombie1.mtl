@@ -1,0 +1,12 @@
+# Blender 3.4.1 MTL File: 'None'
+# www.blender.org
+
+newmtl peopleColors
+Ns 37.321308
+Ka 1.000000 1.000000 1.000000
+Ks 0.240000 0.240000 0.240000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd ./models/complex-models/world_people_colors.png

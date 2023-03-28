@@ -44,6 +44,8 @@ namespace controler{
 			inline auto insert_tile_mesh(char tile, std::shared_ptr<render::Mesh> mesh) -> void {
 				tile_meshes[tile] = mesh;
 			}
+			inline auto get_map_size() -> float { return float(map_size); }
+			inline auto get_tile_size() -> float { return float(tile_size); }
 
 		private:
 			auto generate_vacant_tiles() -> void;

@@ -13,7 +13,7 @@ SRCFILES = main.cpp \
 collision.cpp gameloop.cpp gamemap.cpp generator.cpp \
 camera.cpp entity.cpp geometry.cpp screen.cpp \
 mesh.cpp renderable.cpp shader.cpp \
-matrix.cpp 
+matrix.cpp animation.cpp
 
 # os objs escritos a serem lincados
 _OBJS := $(patsubst %.cpp,%.o,$(SRCFILES)) #convert to .o
@@ -38,6 +38,7 @@ MAIN_DEPENDS := \
 	renders/shader.hpp \
 	renders/mesh.hpp \
 	utils/matrix.hpp \
+	utils/animation.hpp \
 	entities/camera.hpp \
 	entities/screen.hpp \
 	controlers/gameloop.hpp \
@@ -103,7 +104,8 @@ $(OBJDIR)/geometry.o : $(SRCDIR)/entities/geometry.cpp $(addprefix $(SRCDIR)/,$(
 SCREEN_DEPENDS := \
 	entities/screen.hpp \
 	entities/geometry.hpp \
-	renders/renderable.hpp 
+	renders/renderable.hpp \
+	utils/animation.hpp 
 $(OBJDIR)/screen.o : $(SRCDIR)/entities/screen.cpp $(addprefix $(SRCDIR)/,$(SCREEN_DEPENDS))	
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
@@ -130,6 +132,11 @@ MATRIX_DEPENDS := utils/matrix.hpp
 $(OBJDIR)/matrix.o : $(SRCDIR)/utils/matrix.cpp $(addprefix $(SRCDIR)/, $(MATRIX_DEPENDS))
 	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
+ANIMATION_DEPENDS := \
+	utils/animation.hpp \
+	utils/matrix.hpp 
+$(OBJDIR)/animation.o : $(SRCDIR)/utils/animation.cpp $(addprefix $(SRCDIR)/, $(ANIMATION_DEPENDS))
+	$(CXX) -c -o $@ $< $(CPPFLAGS) $(INCLUDE)
 
 
 #builds the libs
