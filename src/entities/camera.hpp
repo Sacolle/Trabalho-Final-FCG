@@ -30,6 +30,8 @@ namespace entity{
 			}
 			inline auto get_projection_ptr() -> float* { return glm::value_ptr(projection); }
 			inline auto get_view_ptr() -> float* { return glm::value_ptr(view); }
+			inline auto get_direction() -> glm::vec4 { return camera_direction; }
+			inline auto get_up_vec() -> glm::vec4 { return up_vec; }
 		private:
 			glm::vec4 up_vec;
 			LookAtParameters look_at_parameters;

@@ -7,6 +7,7 @@
 #include "geometry.hpp"
 #include "../utils/matrix.hpp"
 
+#define PI 3.141592f
 
 namespace entity{
 	enum class GameEventTypes{
@@ -80,7 +81,7 @@ namespace entity{
 				std::shared_ptr<render::Mesh> mesh): Entity(cords, gpu_program, mesh){} 
 			Player(){}
 			virtual ~Player(){}
-			auto direct_player(PressedKeys &keys) -> bool;
+			auto direct_player(PressedKeys &keys, glm::vec4 dir, glm::vec4 up_vec) -> bool;
 			auto take_damage(int amount) -> void;
 			auto set_life_points(int amount) -> void;
 			auto get_life_points() -> int;
@@ -90,7 +91,7 @@ namespace entity{
 			//virtual auto collide(std::shared_ptr<Wall> wall, float delta_time) -> GameEventTypes override;
 			//virtual auto collide(std::shared_ptr<GameEvent> game_event, float delta_time) -> GameEventTypes override;
 		private: 
-			auto player_angle_from_keys(PressedKeys &keys) -> float;
+			auto player_angle_from_keys(PressedKeys &keys, glm::vec4 dir, glm::vec4 up_vec) -> float;
 			int life_points = 3;
 	};
 	//this is needed so that the single dispatch works

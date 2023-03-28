@@ -28,6 +28,8 @@
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
+#define PHIMAX PI/2
+#define PHIMIN 0
 
 auto load_mesh(const char * file) -> std::shared_ptr<render::Mesh>;
 auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr<render::GPUprogram>;
@@ -144,7 +146,7 @@ void game_loop(GLFWwindow *window){
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		{
-			ImGui::Begin("Camera Movment");
+			ImGui::Begin("Camera Movement");
             ImGui::SliderFloat("phi", &g_look_at_parameters.phi, 0.0f, 3.14f);
             ImGui::SliderFloat("theta", &g_look_at_parameters.theta, 0.0f, 3.14f);
             ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 40.0f);
@@ -258,10 +260,16 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
     g_cursor.x = xpos;
     g_cursor.y = ypos;
 
-	if(!g_Paused) return;
-
-    g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
-    g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
+	if(g_Paused){
+		g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
+    	g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
+	}
+	else{
+    	float phi_aux = g_look_at_parameters.phi + 0.01f*dy;
+    	if (phi_aux < PHIMAX && phi_aux > PHIMIN)
+        	g_look_at_parameters.phi = phi_aux;
+		g_look_at_parameters.theta -= 0.01f*dx;
+	}
 }
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {

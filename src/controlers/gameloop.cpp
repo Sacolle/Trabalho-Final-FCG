@@ -195,7 +195,6 @@ namespace controler{
 	auto GameLoop::insert_background(std::shared_ptr<entity::Entity> bg) -> void {
 		background.insert(bg);
 	}
-
 	auto GameLoop::remove_enemy(std::shared_ptr<entity::Enemy> enemy) -> void {
 		enemies.erase(enemy);
 		collision_map->remove_mover(enemy);
@@ -264,7 +263,7 @@ namespace controler{
 	}
 
 	auto GameLoop::update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>> {
-		const bool moved = player->direct_player(keys);
+		const bool moved = player->direct_player(keys, camera->get_direction(), camera->get_up_vec());
 		if(moved){ 
 			//std::cout << "player position \n\tx: " << player->get_cords().x << "\n\tz: " << player->get_cords().z << std::endl;
 			int n_removed = collision_map->remove_mover(player);
