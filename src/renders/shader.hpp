@@ -21,6 +21,7 @@ namespace render{
 			auto use_prog() -> void;
 			auto set_mtx(const char* atrib, const GLfloat *value) -> void;
 			auto set_3floats(const char* atrib, const GLfloat f1, const GLfloat f2, const GLfloat f3) -> void;
+			auto set_4floats(const char* atrib, const GLfloat f1, const GLfloat f2, const GLfloat f3, const GLfloat f4) -> void;
 			auto set_float(const char* atrib, const GLfloat value) -> void;
 			auto set_int(const char* atrib, const GLint value) -> void;
 			auto set_bool(const char* atrib, const bool value) -> void;

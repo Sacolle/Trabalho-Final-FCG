@@ -212,31 +212,28 @@ namespace controler{
 	}
 
 	auto GameLoop::render_frame() -> void {
+		glm::vec4 cords = player->get_cords();
 		phong_phong->use_prog();
 		phong_phong->set_mtx("view",camera->get_view_ptr());
 		phong_phong->set_mtx("projection",camera->get_projection_ptr());
+		phong_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
 		const auto p_trans = player->get_transform();
 		player->draw(p_trans);
-		gouraud_phong->use_prog();
-		gouraud_phong->set_mtx("view",camera->get_view_ptr());
-		gouraud_phong->set_mtx("projection",camera->get_projection_ptr());
 		for(auto enemy: enemies){
 			enemy->draw(enemy->get_transform());
 		}
-		phong_diffuse->use_prog();
-		phong_diffuse->set_mtx("view",camera->get_view_ptr());
-		phong_diffuse->set_mtx("projection",camera->get_projection_ptr());
 		for(auto wall: walls){
 			wall->draw(wall->get_transform());
 		}
-		for(auto game_event : game_events){
-			game_event->draw(game_event->get_transform());
-		}
-		gouraud_diffuse->use_prog();
-		gouraud_diffuse->set_mtx("view",camera->get_view_ptr());
-		gouraud_diffuse->set_mtx("projection",camera->get_projection_ptr());
 		for(auto bg : background){
 			bg->draw(bg->get_transform());
+		}
+		gouraud_phong->use_prog();
+		gouraud_phong->set_mtx("view",camera->get_view_ptr());
+		gouraud_phong->set_mtx("projection",camera->get_projection_ptr());
+		gouraud_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
+		for(auto game_event : game_events){
+			game_event->draw(game_event->get_transform());
 		}
 	} 
 

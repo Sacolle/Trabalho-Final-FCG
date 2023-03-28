@@ -44,7 +44,7 @@ namespace controler{
 				std::shared_ptr<entity::Entity> tile(
 					new entity::Entity(
 						glm::vec4(x_pos,-1.0f,z_pos,1.0f),
-						gouraud_diffuse,
+						gouraud_phong,
 						tile_meshes.at(tile_val)
 					)
 				);
@@ -58,7 +58,7 @@ namespace controler{
 					std::shared_ptr<entity::Wall> wall(
 						new entity::Wall(
 							glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-							phong_diffuse,
+							phong_phong,
 							meshes.at(static_cast<int>(MeshIds::HOUSE))
 						)
 					);
@@ -78,7 +78,7 @@ namespace controler{
 					std::shared_ptr<entity::GameEvent> car(
 						new entity::GameEvent(
 							glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-							phong_diffuse,
+							gouraud_phong,
 							meshes.at(static_cast<int>(MeshIds::CAR)),
 							entity::GameEventTypes::EndPoint
 						)
@@ -100,7 +100,7 @@ namespace controler{
 						std::shared_ptr<entity::GameEvent> point(
 							new entity::GameEvent(
 								glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-								gouraud_diffuse,
+								phong_phong,
 								meshes.at(static_cast<int>(MeshIds::POINT)),
 								entity::GameEventTypes::Point
 							)

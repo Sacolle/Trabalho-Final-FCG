@@ -14,6 +14,7 @@ uniform mat4 projection;
 uniform bool using_texture; //if there is a texture for the model
 //values for calculating the lighting
 uniform vec3 KdIn;
+uniform vec4 player_pos;
 
 uniform sampler2D texture0;
 
@@ -32,7 +33,10 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4  light_pos   = player_pos + vec4(0.0,20.0,0.0,0.0);
+    vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
+    float light_angle = radians(30.0);
+    vec4  l = normalize(light_pos - world_pos);
 
     // Espectro da fonte de iluminação
     vec3 I  = vec3(1.0, 1.0, 1.0);
