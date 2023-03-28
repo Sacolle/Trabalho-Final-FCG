@@ -41,16 +41,16 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4  flashlight_pos = player_pos;
+    vec4  flashlight_pos = player_pos - vec4(0.0,1.0,0.0,0.0);
     vec4  camera_dir = player_pos - camera_position;
     camera_dir.y = 0;
     vec4  flashlight_dir   = normalize(camera_dir);
-    float flashlight_range = 30.0;
+    float flashlight_range = 32.0;
     float flashlight_angle = radians(15.0);
     vec4  light_pos   = player_pos + vec4(0.0,10.0,0.0,0.0);
     vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
     float light_angle = radians(30.0);
-    vec4  l = normalize(light_pos - world_pos);
+    vec4  l = normalize(light_pos - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -62,7 +62,7 @@ void main()
     vec3 I  = vec3(0.7, 0.7, 0.7);
 
     // Espectro da luz ambiente
-    vec3 Ia = vec3(0.3, 0.1, 0.1);
+    vec3 Ia = vec3(0.0000001, 0.0000001, 0.0000001);
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
@@ -78,16 +78,31 @@ void main()
     }
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso, especular, e ambiente.
-    bool iluminado_spotlight  = true;
-    bool iluminado_flashlight = true;
-    if(dot(normalize(p - light_pos),light_dir) < cos(light_angle))
+    bool  iluminado_spotlight  = true;
+    bool  iluminado_flashlight = true;
+    float spotlight_on_pixel   = dot(normalize(p - light_pos),light_dir);
+    float flashlight_on_pixel  = dot(normalize(p - flashlight_pos),flashlight_dir);
+    float spotlight_cut_off    = cos(light_angle);
+    float flashlight_cut_off   = cos(flashlight_angle);
+    float flashlight_distance  = length(p - flashlight_pos);
+    if(spotlight_on_pixel < spotlight_cut_off)
         iluminado_spotlight  = false;
-    if(dot(normalize(p - flashlight_pos),flashlight_dir) < cos(flashlight_angle) || length(p - flashlight_pos) > flashlight_range)
+    if(flashlight_on_pixel < flashlight_cut_off || flashlight_distance > flashlight_range)
         iluminado_flashlight = false;
     if(!iluminado_spotlight && !iluminado_flashlight)
         color.rgb = ambient_term;
-    else
-        color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+    else{
+        float intensity_flashlight = 0.0, intensity_spotlight = 0.0;
+        if(iluminado_flashlight){
+            intensity_flashlight = 1.0 - (1 - flashlight_on_pixel) / (1 - flashlight_cut_off);
+            intensity_flashlight = min(intensity_flashlight, 1.0 - (1 - flashlight_distance) / (1 - flashlight_range));
+        }
+            
+        if(iluminado_spotlight)
+            intensity_spotlight  = 1.0 - (1 - spotlight_on_pixel) / (1 - spotlight_cut_off);
+        float intensity = max(intensity_flashlight, intensity_spotlight);
+        color.rgb = (lambert_diffuse_term + ambient_term + phong_specular_term) * intensity;
+    }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     //color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);

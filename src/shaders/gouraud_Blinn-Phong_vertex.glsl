@@ -41,6 +41,12 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
+    vec4  flashlight_pos = player_pos;
+    vec4  camera_dir = player_pos - camera_position;
+    camera_dir.y = 0;
+    vec4  flashlight_dir   = normalize(camera_dir);
+    float flashlight_range = 30.0;
+    float flashlight_angle = radians(15.0);
     vec4  light_pos   = player_pos + vec4(0.0,30.0,0.0,0.0);
     vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
     float light_angle = radians(30.0);
@@ -73,7 +79,13 @@ void main()
     }
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso, especular, e ambiente.
+    bool iluminado_spotlight  = true;
+    bool iluminado_flashlight = true;
     if(dot(normalize(world_pos - light_pos),light_dir) < cos(light_angle))
+        iluminado_spotlight  = false;
+    if(dot(normalize(world_pos - flashlight_pos),flashlight_dir) < cos(flashlight_angle) || length(world_pos - flashlight_pos) > flashlight_range)
+        iluminado_flashlight = false;
+    if(!iluminado_spotlight && !iluminado_flashlight)
         color_v.rgb = ambient_term;
     else
         color_v.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
