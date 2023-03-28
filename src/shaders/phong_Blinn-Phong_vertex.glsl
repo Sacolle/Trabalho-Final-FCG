@@ -18,7 +18,6 @@ out vec2 text_cords;
 
 void main()
 {
-
 	vec4 pos = vec4(vertex.xyz,1.0);
 	model_pos = pos;
 	world_pos = model_transform * pos;

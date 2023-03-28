@@ -29,6 +29,8 @@
 #define WINDOW_HEIGHT 800
 #define WINDOW_WIDTH  800
 #define log(text) std::cout << text << std::endl
+#define PHIMAX PI/2
+#define PHIMIN 0
 
 auto load_mesh(const char * file, const char * mat) -> std::shared_ptr<render::Mesh>;
 auto load_gpu_program(const char * vertex, const char * frag) -> std::shared_ptr<render::GPUprogram>;
@@ -55,9 +57,12 @@ void game_loop(GLFWwindow *window){
 
 	log("load shaders");
 	//carrega os shaders
-	auto gpu_program   = load_gpu_program("src/shaders/model_vertex.glsl","src/shaders/model_fragment.glsl");
-	auto wire_renderer = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
-	auto menu_renderer = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
+	auto phong_phong     = load_gpu_program("src/shaders/phong_Blinn-Phong_vertex.glsl","src/shaders/phong_Blinn-Phong_fragment.glsl");
+	auto phong_diffuse   = load_gpu_program("src/shaders/phong_diffuse_vertex.glsl","src/shaders/phong_diffuse_fragment.glsl");
+	auto gouraud_phong   = load_gpu_program("src/shaders/gouraud_Blinn-Phong_vertex.glsl","src/shaders/gouraud_Blinn-Phong_fragment.glsl");
+	auto gouraud_diffuse = load_gpu_program("src/shaders/gouraud_diffuse_vertex.glsl","src/shaders/gouraud_diffuse_fragment.glsl");
+	auto wire_renderer   = load_gpu_program("src/shaders/wire_vertex.glsl", "src/shaders/wire_fragment.glsl");
+	auto menu_renderer   = load_gpu_program("src/shaders/menu_vertex.glsl", "src/shaders/menu_fragment.glsl");
 
 	log("load meshes");
 	
@@ -92,7 +97,7 @@ void game_loop(GLFWwindow *window){
 	std::shared_ptr<render::WireMesh> cube_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Rectangle)));
 	std::shared_ptr<render::WireMesh> cylinder_wire_mesh(new render::WireMesh(static_cast<int>(entity::BBoxType::Cylinder)));
 
-	std::shared_ptr<entity::Player> player(new entity::Player(glm::vec4(0,0,-6,1),gpu_program, character_mesh));
+	std::shared_ptr<entity::Player> player(new entity::Player(glm::vec4(0,0,-6,1),phong_phong, character_mesh));
 	player->set_wire_mesh(cylinder_wire_mesh);
 	player->set_wire_renderer(wire_renderer);
 	player->set_bbox_type(entity::BBoxType::Cylinder);
@@ -105,9 +110,9 @@ void game_loop(GLFWwindow *window){
 
 	std::unique_ptr<controler::Generator> game_generator(
 		new controler::Generator(
-			gpu_program, wire_renderer,
+			phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse, wire_renderer,
 			cube_wire_mesh, cylinder_wire_mesh,
-			5,5
+			20,15
 		)
 	);
 	//ading the meshes
@@ -131,11 +136,11 @@ void game_loop(GLFWwindow *window){
 		std::unique_ptr<controler::CollisionMap>(new controler::CollisionMap(100,100,10,10)),
 		std::move(game_generator),
 		player,
-		gpu_program, wire_renderer, menu_renderer,
+		phong_phong, phong_diffuse, gouraud_phong, gouraud_diffuse,
+		wire_renderer, menu_renderer,
 		&g_keys, &g_look_at_parameters,
 		&g_angles, &g_cursor,
-		&g_ScreenRatio, &g_Paused);
-
+		&g_ScreenRatio, &g_Paused, window);
 	log("inserindo o inimigo");
 
 	//screens
@@ -204,14 +209,14 @@ void game_loop(GLFWwindow *window){
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		{
-			ImGui::Begin("Camera Movment");
+			ImGui::Begin("Camera Movement");
             ImGui::SliderFloat("phi", &g_look_at_parameters.phi, 0.0f, 3.14f);
             ImGui::SliderFloat("theta", &g_look_at_parameters.theta, 0.0f, 3.14f);
             ImGui::SliderFloat("distance", &g_look_at_parameters.radius, 2.5f, 40.0f);
 			ImGui::Checkbox("render bbox", &render_bbox);
 			ImGui::End();
 		}
-	    glClearColor(1.0f, 0.2f, 0.2f, 1.0f); // define a cor de fundo
+	    glClearColor(0.04f, 0.04f, 0.1f, 1.0f); // define a cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // pinta os pixels do framebuffer 
 
 		game_controler.update(delta_time);
@@ -318,10 +323,16 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos){
     g_cursor.x = xpos;
     g_cursor.y = ypos;
 
-	if(!g_Paused) return;
-
-    g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
-    g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
+	if(g_Paused){
+		g_angles.angleX = dx/(g_windowSize.width/2)  * 2*PI; // Calcula o ângulo rotação horizontal de acordo com a porcentagem da tela movida (máximo = 2*PI)
+    	g_angles.angleY = dy/(g_windowSize.height/2) * 2*PI; // Calcula o ângulo rotação  vertical  de acordo com a porcentagem da tela movida (máximo = 2*PI)
+	}
+	else{
+    	float phi_aux = g_look_at_parameters.phi + 0.01f*dy;
+    	if (phi_aux < PHIMAX && phi_aux > PHIMIN)
+        	g_look_at_parameters.phi = phi_aux;
+		g_look_at_parameters.theta -= 0.01f*dx;
+	}
 }
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
@@ -354,10 +365,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 	}
 	if(key == GLFW_KEY_P && action == GLFW_PRESS){
 		g_Paused = !g_Paused;
-		if(g_Paused)
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		else
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }
 //Função para a redimensão da janela

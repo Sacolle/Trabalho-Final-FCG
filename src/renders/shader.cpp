@@ -116,6 +116,10 @@ namespace render{
 		GLint model_uniform = get_position(atrib);
 		glUniform3f(model_uniform, f1, f2, f3);
 	}
+	auto GPUprogram::set_4floats(const char* atrib, const GLfloat f1, const GLfloat f2, const GLfloat f3, const GLfloat f4) -> void{
+		GLint model_uniform = get_position(atrib);
+		glUniform4f(model_uniform, f1, f2, f3, f4);
+	}
 	auto GPUprogram::set_float(const char* atrib, const GLfloat value) -> void{
 		GLint model_uniform = get_position(atrib);
 		glUniform1f(model_uniform, value);

@@ -48,38 +48,39 @@ namespace entity{
 	/*
 	 * Player implementation 
 	*/
-	auto Player::direct_player(PressedKeys &keys) -> bool {
-		const float angle = player_angle_from_keys(keys);
+	auto Player::direct_player(PressedKeys &keys, glm::vec4 dir, glm::vec4 up_vec) -> bool {
+		const float angle = player_angle_from_keys(keys, dir, up_vec);
 		if(angle == -1)
 			return false;
 		set_y_angle(angle);
 		return true;
 	}
-	auto Player::player_angle_from_keys(PressedKeys &keys) -> float {
-		//TODO: o angulo de rotação precisa se basear na direção base do player
-		//e na direção da camera ou na direção global
+	auto Player::player_angle_from_keys(PressedKeys &keys, glm::vec4 dir, glm::vec4 up_vec) -> float {
 		glm::vec4 result(0.0f,0.0f,0.0f,0.0f);
+		dir.y = 0;
+		glm::vec4 frente  = dir;
+		glm::vec4 direita = dir * mtx::rotate_rodriguez(PI/2,up_vec);
+
 		if(keys.w){
-			result[2]--;
+			result += frente;
 		}
 		if(keys.a){
-			result[0]--;
+			result -= direita;
 		}
 		if(keys.s){
-			result[2]++;
+			result -= frente;
 		}
 		if(keys.d){
-			result[0]++;
+			result += direita;
 		}
 		if(result == glm::vec4(0.0f,0.0f,0.0f,0.0f)) return -1;
 
-		const float pi = 3.141592f;
 		const auto base_dir = get_base_direction();
 		//como gerar o angulo baseado nos vetores de 0 a 2pi
 		//https://math.stackexchange.com/a/2234559
 		const auto angle = atan2f(base_dir.z, base_dir.x) - atan2f(result.z, result.x);
 
-		return angle < 0 ? angle + 2*pi : angle;
+		return angle < 0 ? angle + 2*PI : angle;
 	}
 	auto Player::take_damage(int amount) -> void {
 		life_points -= amount;

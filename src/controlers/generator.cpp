@@ -7,12 +7,16 @@
 
 namespace controler{
 	Generator::Generator(
-		std::shared_ptr<render::GPUprogram> gpu_program,
+		std::shared_ptr<render::GPUprogram> phong_phong,
+		std::shared_ptr<render::GPUprogram> phong_diffuse,
+		std::shared_ptr<render::GPUprogram> gouraud_phong,
+		std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 		std::shared_ptr<render::GPUprogram> wire_renderer,
 		std::shared_ptr<render::WireMesh> cube_wire_mesh,
 		std::shared_ptr<render::WireMesh> cylinder_wire_mesh,
 		int size, float tile_size
-	):gpu_program(gpu_program), wire_renderer(wire_renderer),
+	):phong_phong(phong_phong), phong_diffuse(phong_diffuse),
+	gouraud_phong(gouraud_phong), gouraud_diffuse(gouraud_diffuse), wire_renderer(wire_renderer),
 	cube_wire_mesh(cube_wire_mesh), cylinder_wire_mesh(cylinder_wire_mesh),
 	map_size(size), tile_size(tile_size), wave_map(WaveFuncMap(map_size, 1)){
 	}
@@ -40,7 +44,7 @@ namespace controler{
 				std::shared_ptr<entity::Entity> tile(
 					new entity::Entity(
 						glm::vec4(x_pos,-1.0f,z_pos,1.0f),
-						gpu_program,
+						gouraud_phong,
 						tile_meshes.at(tile_val)
 					)
 				);
@@ -49,13 +53,12 @@ namespace controler{
 
 				//add wall
 				if(tile_val == '#'){
-
 					//std::cout << "ADD HOUSE" << std::endl;
 					//TODO: vary the size of the houses
 					std::shared_ptr<entity::Wall> wall(
 						new entity::Wall(
 							glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-							gpu_program,
+							phong_phong,
 							meshes.at(static_cast<int>(MeshIds::HOUSE))
 						)
 					);
@@ -75,7 +78,7 @@ namespace controler{
 					std::shared_ptr<entity::GameEvent> car(
 						new entity::GameEvent(
 							glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-							gpu_program,
+							gouraud_phong,
 							meshes.at(static_cast<int>(MeshIds::CAR)),
 							entity::GameEventTypes::EndPoint
 						)
@@ -98,7 +101,7 @@ namespace controler{
 						std::shared_ptr<entity::GameEvent> point(
 							new entity::GameEvent(
 								glm::vec4(x_pos, 0.0f, z_pos, 1.0f),
-								gpu_program,
+								phong_phong,
 								meshes.at(static_cast<int>(MeshIds::POINT)),
 								entity::GameEventTypes::Point
 							)
@@ -153,7 +156,7 @@ namespace controler{
 	auto Generator::generate_enemy(int type) -> std::shared_ptr<entity::Enemy> {
 		auto pos = get_vacant_position();
 
-		std::shared_ptr<entity::Enemy> enemy(new entity::Enemy(pos, gpu_program, meshes[type]));
+		std::shared_ptr<entity::Enemy> enemy(new entity::Enemy(pos, phong_phong, meshes[type]));
 
 		enemy->set_wire_mesh(cylinder_wire_mesh);
 		enemy->set_wire_renderer(wire_renderer);

@@ -14,20 +14,27 @@ namespace controler{
 		std::unique_ptr<CollisionMap> _collision_map,
 		std::unique_ptr<Generator> _generator,
 		std::shared_ptr<entity::Player> _player,
-		std::shared_ptr<render::GPUprogram> gpu_program,
+		std::shared_ptr<render::GPUprogram> phong_phong,
+		std::shared_ptr<render::GPUprogram> phong_diffuse,
+		std::shared_ptr<render::GPUprogram> gouraud_phong,
+		std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 		std::shared_ptr<render::GPUprogram> wire_renderer,
 		std::shared_ptr<render::GPUprogram> menu_renderer,
 		entity::PressedKeys *pressed_keys,
 		entity::LookAtParameters *look_at_param,
 		entity::RotationAngles *rotation_angles,
 		CursorState *cursor,
-		float *screen_ratio, bool *paused):
+		float *screen_ratio, bool *paused,
+		GLFWwindow *window):
 		camera(std::move(_camera)), collision_map(std::move(_collision_map)), generator(std::move(_generator)),
 		player(_player),
-		gpu_program(gpu_program), wire_renderer(wire_renderer), menu_renderer(menu_renderer),
+		phong_phong(phong_phong), phong_diffuse(phong_diffuse),
+		gouraud_phong(gouraud_phong), gouraud_diffuse(gouraud_diffuse),
+		wire_renderer(wire_renderer), menu_renderer(menu_renderer),
 		pressed_keys(pressed_keys), look_at_param(look_at_param),
 		rotation_angles(rotation_angles), cursor(cursor),
-		screen_ratio(screen_ratio), paused(paused)
+		screen_ratio(screen_ratio), paused(paused),
+		window(window)
 	{
 		collision_map->insert_mover(player);
 	} 
@@ -111,6 +118,7 @@ namespace controler{
 			case entity::MenuOptions::Play:
 				std::cout << "Play" << std::endl;
 				state = GameState::Playing;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
@@ -121,16 +129,19 @@ namespace controler{
 			case entity::MenuOptions::Retry:
 				std::cout << "Retry" << std::endl;
 				state = GameState::Playing;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				clear_playing_state();
 				setup_playing_state();
 				break;
 			case entity::MenuOptions::Credits:
 				std::cout << "Credits" << std::endl;
 				state = GameState::Credits;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
 			case entity::MenuOptions::ToMenu:
 				std::cout << "ToMenu" << std::endl;
 				state = GameState::MainMenu;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				break;
 			case entity::MenuOptions::RickRoll:
 				std::cout << "https://youtu.be/dQw4w9WgXcQ" << std::endl;
@@ -172,9 +183,11 @@ namespace controler{
 			break;
 		case entity::GameEventTypes::EndPoint :
 			state = GameState::GameWin;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			break;
 		case entity::GameEventTypes::GameOver :
 			state = GameState::GameOver;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 			break;
 		default:
 			break;
@@ -208,7 +221,6 @@ namespace controler{
 	auto GameLoop::insert_background(std::shared_ptr<entity::Entity> bg) -> void {
 		background.insert(bg);
 	}
-
 	auto GameLoop::remove_enemy(std::shared_ptr<entity::Enemy> enemy) -> void {
 		enemies.erase(enemy);
 		collision_map->remove_mover(enemy);
@@ -226,10 +238,11 @@ namespace controler{
 	}
 
 	auto GameLoop::render_frame() -> void {
-		gpu_program->use_prog();
-		gpu_program->set_mtx("view",camera->get_view_ptr());
-		gpu_program->set_mtx("projection",camera->get_projection_ptr());
-
+		glm::vec4 cords = player->get_cords();
+		phong_phong->use_prog();
+		phong_phong->set_mtx("view",camera->get_view_ptr());
+		phong_phong->set_mtx("projection",camera->get_projection_ptr());
+		phong_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
 		const auto p_trans = player->get_transform();
 		player->draw(p_trans);
 		for(auto enemy: enemies){
@@ -238,11 +251,15 @@ namespace controler{
 		for(auto wall: walls){
 			wall->draw(wall->get_transform());
 		}
-		for(auto game_event : game_events){
-			game_event->draw(game_event->get_transform());
-		}
 		for(auto bg : background){
 			bg->draw(bg->get_transform());
+		}
+		gouraud_phong->use_prog();
+		gouraud_phong->set_mtx("view",camera->get_view_ptr());
+		gouraud_phong->set_mtx("projection",camera->get_projection_ptr());
+		gouraud_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
+		for(auto game_event : game_events){
+			game_event->draw(game_event->get_transform());
 		}
 	} 
 
@@ -269,7 +286,7 @@ namespace controler{
 	}
 
 	auto GameLoop::update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>> {
-		const bool moved = player->direct_player(keys);
+		const bool moved = player->direct_player(keys, camera->get_direction(), camera->get_up_vec());
 		if(moved){ 
 			//std::cout << "player position \n\tx: " << player->get_cords().x << "\n\tz: " << player->get_cords().z << std::endl;
 			int n_removed = collision_map->remove_mover(player);

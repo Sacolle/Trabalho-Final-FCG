@@ -3,6 +3,9 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+// Headers das bibliotecas OpenGL
+#include <glad/glad.h>   // Criação de contexto OpenGL 3.3
+#include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
 
 #include "../entities/entity.hpp"
 #include "../entities/camera.hpp"
@@ -31,15 +34,18 @@ namespace controler{
 			std::unique_ptr<CollisionMap> _collision_map,
 			std::unique_ptr<Generator> _generator,
 			std::shared_ptr<entity::Player> _player,
-			std::shared_ptr<render::GPUprogram> gpu_program,
+			std::shared_ptr<render::GPUprogram> phong_phong,
+			std::shared_ptr<render::GPUprogram> phong_diffuse,
+			std::shared_ptr<render::GPUprogram> gouraud_phong,
+			std::shared_ptr<render::GPUprogram> gouraud_diffuse,
 			std::shared_ptr<render::GPUprogram> wire_renderer,
 			std::shared_ptr<render::GPUprogram> menu_renderer,
 			entity::PressedKeys *pressed_keys,
 			entity::LookAtParameters *look_at_param,
 			entity::RotationAngles *rotation_angles,
 			CursorState *cursor,
-			float *screen_ratio, bool *paused);  
-
+			float *screen_ratio, bool *paused,
+			GLFWwindow *window);  
 		~GameLoop();
 		/*updates to the next gameMoment*/ 
 		auto update(float delta_time) -> void; 
@@ -87,7 +93,10 @@ namespace controler{
 		std::unordered_set<std::shared_ptr<entity::Entity>> background;
 
 		//render stuff
-		std::shared_ptr<render::GPUprogram> gpu_program;
+		std::shared_ptr<render::GPUprogram> phong_phong;
+		std::shared_ptr<render::GPUprogram> phong_diffuse;
+		std::shared_ptr<render::GPUprogram> gouraud_phong;
+		std::shared_ptr<render::GPUprogram> gouraud_diffuse;
 		std::shared_ptr<render::GPUprogram> wire_renderer;
 		std::shared_ptr<render::GPUprogram> menu_renderer;
 
@@ -116,5 +125,7 @@ namespace controler{
 		float speed_increasse = 0.0025f;
 
 		bool draw_bbox = true;
+
+		GLFWwindow *window;
 	};
 }
