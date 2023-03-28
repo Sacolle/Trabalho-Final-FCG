@@ -17,6 +17,8 @@ uniform vec3 KdIn;
 uniform vec3 Ks;  
 uniform float q;
 uniform vec4 player_pos;
+uniform bool paused;
+uniform vec4 camera_dir;
 
 uniform sampler2D texture0;
 
@@ -41,16 +43,20 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4  camera_dir = player_pos - camera_position;
-    camera_dir.y = 0;
-    vec4  flashlight_dir   = normalize(camera_dir);
-    vec4  flashlight_pos   = player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * 8;
+    vec4  flashlight_dir = normalize(camera_dir);
+    vec4  flashlight_pos = camera_position;
+    if(!paused){
+        flashlight_dir = player_pos - camera_position;
+        flashlight_dir.y = 0;
+        flashlight_dir = normalize(flashlight_dir);
+        flashlight_pos = player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * 8;
+    }
     float flashlight_range = 50.0;
     float flashlight_angle = radians(15.0);
     vec4  light_pos   = player_pos + vec4(0.0,10.0,0.0,0.0);
     vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
     float light_angle = radians(30.0);
-    vec4  l = normalize(light_pos - p);
+    vec4  l = normalize(flashlight_pos - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);

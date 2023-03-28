@@ -239,10 +239,13 @@ namespace controler{
 
 	auto GameLoop::render_frame() -> void {
 		glm::vec4 cords = player->get_cords();
+		glm::vec4 c_dir = camera->get_direction();  
 		phong_phong->use_prog();
 		phong_phong->set_mtx("view",camera->get_view_ptr());
 		phong_phong->set_mtx("projection",camera->get_projection_ptr());
 		phong_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
+		phong_phong->set_bool("paused", *paused);
+		phong_phong->set_4floats("camera_dir", c_dir.x, c_dir.y, c_dir.z, c_dir.w);
 		const auto p_trans = player->get_transform();
 		player->draw(p_trans);
 		for(auto enemy: enemies){
