@@ -22,27 +22,27 @@ Roadmap de Implementação:
 - [x] Implementação da estrutura de Entidades em Classes.
 - [x] Implementação dos controles do player.
 	- [x] Implemeção da movimentação.
-	- [ ] Decouple do movimento do player (e Entidades) da Framerate.
+	- [x] Decouple do movimento do player (e Entidades) da Framerate.
 	- [ ] Implemeção do pulo.
-	- [ ] Implemeção de interações com o cenário e inimigos.
-	- [ ] Implementação da interação Player-Camera.
+	- [x] Implemeção de interações com o cenário e inimigos.
+	- [x] Implementação da interação Player-Camera.
 - [x] Implementação da colisão de Entidades.
 	- [x] Implementação das Bounding Boxes.
 	- [x] Implementação dos Wire Frames para mostrar as Bounding Boxes.
 	- [x] Implementação das Funções de Colisão.
 	- [x] Implementação de um alritmo de Spacial Hash para gerir as colisões.
-- [ ] Implementação do Game Loop.
-	- [ ] Spawn de Inimigos.
+- [x] Implementação do Game Loop.
+	- [x] Spawn de Inimigos.
 	- [ ] Path finding dos zumbis usando o algoritmo A*.
-	- [ ] Movimentação de alguma Entidade usando uma curva de Bezier.
-- [ ] Implementação da geração de Terreno automático usando o algoritmo de *Wave Funcion Colapse*.
-- [ ] Implementação do Menu e Tela de Pause
+	- [x] Movimentação de alguma Entidade usando uma curva de Bezier.
+- [x] Implementação da geração de Terreno automático usando o algoritmo de *Wave Funcion Colapse*.
+- [x] Implementação do Menu e Tela de Pause
 - [ ] Implementação do Som e Música.
-- [ ] Implementação do Sistema de Iluminção.
-	- [ ] Modelo difusa (Lamber).
-	- [ ] Modelo Blinn-Phong.
-	- [ ] Interpolação de Iluminação.
-		- [ ] Modelo de Gouraud.
-		- [ ] Modelo de Phong.
+- [x] Implementação do Sistema de Iluminção.
+	- [x] Modelo difusa (Lamber).
+	- [x] Modelo Blinn-Phong.
+	- [x] Interpolação de Iluminação.
+		- [x] Modelo de Gouraud.
+		- [x] Modelo de Phong.
 		
 Algumas implementações são de requisito do projeto enquanto outras são de vontade do grupo. 
