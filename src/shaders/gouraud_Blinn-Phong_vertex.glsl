@@ -50,7 +50,7 @@ void main()
     vec4  light_pos   = player_pos + vec4(0.0,30.0,0.0,0.0);
     vec4  light_dir   = normalize(vec4(0.0,-1.0,0.0,0.0));
     float light_angle = radians(30.0);
-    vec4  l = normalize(light_pos - world_pos);
+    vec4  l = normalize(flashlight_pos - world_pos);
 
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
@@ -67,6 +67,7 @@ void main()
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
+    lambert = 1.0;
     vec3 lambert_diffuse_term = KdIn*I*lambert;             // Termo difuso utilizando a lei dos cossenos de Lambert
     vec3 ambient_term = Ka*Ia;                              // Termo ambiente
     vec3 phong_specular_term = Ks*I*pow(max(0,dot(r,v)),q); // Termo especular utilizando o modelo de iluminação de Phong
