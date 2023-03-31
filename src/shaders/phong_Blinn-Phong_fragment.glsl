@@ -10,28 +10,23 @@ uniform mat4 model_transform;  //model values from local cords to global cords
 uniform mat4 view;
 uniform mat4 projection;
 
-uniform bool using_texture; //if there is a texture for the model
+
 //values for calculating the lighting
 uniform vec3 Ka;
 uniform vec3 KdIn;
 uniform vec3 Ks;  
 uniform float q;
+
+//if there is a texture for the model
+uniform sampler2D texture0;
+uniform bool using_texture; 
+
+//values for calculating the light position
 uniform vec4 player_pos;
 uniform bool paused;
 uniform vec4 camera_dir;
 
-uniform sampler2D texture0;
-
 out vec4 color;
-
-#define DARKNESS   0
-#define SPOTLIGHT  1
-#define FLASHLIGHT 2
-
-struct LightFont{
-    int   fontType;
-    float intensity;
-};
 
 vec4 getFlashlightDir(vec4 camera_position){
     if(paused){
@@ -51,8 +46,8 @@ vec4 getFlashlightPos(vec4 camera_position, vec4 flashlight_dir){
 	}
 }
 
-LightFont getLightFont(vec4 p, vec4 flashlight_dir, vec4 flashlight_pos, float flashlight_angle, float flashlight_range, vec4 spotlight_pos, vec4 spotlight_dir, float spotlight_angle){
-    LightFont lightFont;
+float getIntensity(vec4 p, vec4 flashlight_dir, vec4 flashlight_pos, float flashlight_angle, float flashlight_range, vec4 spotlight_pos, vec4 spotlight_dir, float spotlight_angle){
+    float intensity;
     bool  iluminado_spotlight  = true;
     bool  iluminado_flashlight = true;
     float spotlight_on_pixel   = dot(normalize(p - spotlight_pos),spotlight_dir);
@@ -67,8 +62,7 @@ LightFont getLightFont(vec4 p, vec4 flashlight_dir, vec4 flashlight_pos, float f
         iluminado_flashlight = false;
 
     if(!iluminado_spotlight && !iluminado_flashlight){
-        lightFont.fontType  = DARKNESS;
-        lightFont.intensity = 0.0;
+        intensity = 0.0;
     }
     else{
         float intensity_flashlight = 0.0;
@@ -82,15 +76,10 @@ LightFont getLightFont(vec4 p, vec4 flashlight_dir, vec4 flashlight_pos, float f
         if(iluminado_spotlight)
             intensity_spotlight  = 1.0 - (1.0 - spotlight_on_pixel) / (1.0 - spotlight_cut_off);
         
-        lightFont.intensity = max(intensity_flashlight, intensity_spotlight);
-
-        if(intensity_flashlight >= intensity_spotlight)
-            lightFont.fontType = FLASHLIGHT;
-        else
-            lightFont.fontType = SPOTLIGHT;
+        intensity = max(intensity_flashlight, intensity_spotlight);
     }
 
-    return lightFont;
+    return intensity;
 }
 
 void main()
@@ -129,11 +118,11 @@ void main()
     float spotlight_angle  = radians(30.0);
 
     // Testa se o pixel é mais afetado pela spotlight ou flashlight e calcula a intensidade
-    LightFont lightFont = getLightFont(p, flashlight_dir, flashlight_pos, flashlight_angle, flashlight_range, spotlight_pos, spotlight_dir, spotlight_angle);
+    float intensity = getIntensity(p, flashlight_dir, flashlight_pos, flashlight_angle, flashlight_range, spotlight_pos, spotlight_dir, spotlight_angle);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
     vec4 l;
-    if(lightFont.fontType == FLASHLIGHT)
+    if(paused)
         l = normalize(flashlight_pos - p);
     else
         l = normalize(spotlight_pos - p);
@@ -158,13 +147,9 @@ void main()
     vec3 ambient_light = ambient_term + lambert_diffuse_term * 0.02;
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso, especular, e ambiente.
-    if(lightFont.fontType == DARKNESS)
+    if(intensity == 0.0)
         color.rgb = ambient_light;
     else
-        color.rgb = (lambert_diffuse_term + phong_specular_term) * lightFont.intensity + ambient_light;
-
-    // Cor final com correção gamma, considerando monitor sRGB.
-    //color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-    //color.rgb = n.xyz;
+        color.rgb = (lambert_diffuse_term + phong_specular_term) * intensity + ambient_light;
 }
 

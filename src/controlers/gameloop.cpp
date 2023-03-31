@@ -254,6 +254,12 @@ namespace controler{
 		for(auto wall: walls){
 			wall->draw(wall->get_transform());
 		}
+		phong_diffuse->use_prog();
+		phong_diffuse->set_mtx("view",camera->get_view_ptr());
+		phong_diffuse->set_mtx("projection",camera->get_projection_ptr());
+		phong_diffuse->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
+		phong_diffuse->set_bool("paused", *paused);
+		phong_diffuse->set_4floats("camera_dir", c_dir.x, c_dir.y, c_dir.z, c_dir.w);
 		for(auto bg : background){
 			bg->draw(bg->get_transform());
 		}
@@ -261,6 +267,8 @@ namespace controler{
 		gouraud_phong->set_mtx("view",camera->get_view_ptr());
 		gouraud_phong->set_mtx("projection",camera->get_projection_ptr());
 		gouraud_phong->set_4floats("player_pos",cords.x, cords.y, cords.z, cords.w);
+		gouraud_phong->set_bool("paused", *paused);
+		gouraud_phong->set_4floats("camera_dir", c_dir.x, c_dir.y, c_dir.z, c_dir.w);
 		for(auto game_event : game_events){
 			game_event->draw(game_event->get_transform());
 		}

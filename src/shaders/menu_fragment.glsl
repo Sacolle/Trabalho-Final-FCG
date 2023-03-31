@@ -22,8 +22,5 @@ void main()
 		color.rgb = vec3(0.0,0.0,1.0);
 	}
 	color.a = 1;
-
-    // Cor final com correção gamma, considerando monitor sRGB.
-    color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 } 
 
