@@ -27,6 +27,7 @@ uniform bool paused;
 uniform vec4 camera_dir;
 
 out vec4 color;
+#define FLASHLIGHTOFFSET 8.0
 
 vec4 getFlashlightDir(vec4 camera_position){
     if(paused){
@@ -42,7 +43,7 @@ vec4 getFlashlightPos(vec4 camera_position, vec4 flashlight_dir){
     if(paused){
         return camera_position;
 	}else{
-        return player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * 8;
+        return player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * FLASHLIGHTOFFSET;
 	}
 }
 
@@ -110,7 +111,7 @@ void main()
     vec4  flashlight_dir   = getFlashlightDir(camera_position);
     vec4  flashlight_pos   = getFlashlightPos(camera_position, flashlight_dir);
     float flashlight_angle = radians(15.0);
-    float flashlight_range = 50.0;
+    float flashlight_range = 50.0 + FLASHLIGHTOFFSET;
 
     // Informações da spotlight
     vec4  spotlight_pos    = player_pos + vec4(0.0,10.0,0.0,0.0);
