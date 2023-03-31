@@ -299,7 +299,6 @@ namespace controler{
 	auto GameLoop::update_player(float delta_time, entity::PressedKeys keys) -> std::pair<entity::GameEventTypes, std::shared_ptr<entity::GameEvent>> {
 		const bool moved = player->direct_player(keys, camera->get_direction(), camera->get_up_vec());
 		if(moved){ 
-			//std::cout << "player position \n\tx: " << player->get_cords().x << "\n\tz: " << player->get_cords().z << std::endl;
 			int n_removed = collision_map->remove_mover(player);
 			assert(n_removed == 1);
 
@@ -312,7 +311,6 @@ namespace controler{
 			}else{
 				const auto resulting_event = collided_with_dx->collide(player, delta_time);
 				if(is_game_event_event(resulting_event)){
-					std::cout << "event" << std::endl;
 					return std::make_pair(resulting_event, std::dynamic_pointer_cast<entity::GameEvent>(collided_with_dx));
 				}else if(resulting_event == entity::GameEventTypes::GameOver){
 					return std::make_pair(entity::GameEventTypes::GameOver, nullptr);
