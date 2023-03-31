@@ -162,6 +162,7 @@ namespace controler{
 		enemy->set_wire_renderer(wire_renderer);
 
 		enemy->set_scale(0.2f,0.2f,0.2f);
+		enemy->set_base_translate(0.0f,-4.5f,0.0f);
 		enemy->set_base_direction(glm::vec4(0.0f,0.0f,1.0f,0.0f));
 		enemy->set_bbox_type(entity::BBoxType::Cylinder);
 		enemy->set_bbox_size(1.0f,2.0f,1.0f);
