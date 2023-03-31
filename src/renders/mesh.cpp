@@ -87,7 +87,7 @@ namespace render{
 		const auto& shapes = reader.GetShapes();
 		const auto& mats = reader.GetMaterials();
 
-		std::unordered_map<glm::vec3, GLuint, vec3_hash> vertices;
+		std::unordered_map<struct Vertex, GLuint, vertice_hash, vertice_equal_to> vertices;
 
 		//for every shape in the .obj
 		for (const auto &shape : shapes){
@@ -109,40 +109,49 @@ namespace render{
 				//for every vertex in the triangle
 				for (size_t v = 0; v < 3; v++){
                     tinyobj::index_t idx = shape.mesh.indices[3 * t + v];
+					struct Vertex vertice;
 
                     const float vx = attrib.vertices[3 * idx.vertex_index + 0];
                     const float vy = attrib.vertices[3 * idx.vertex_index + 1];
                     const float vz = attrib.vertices[3 * idx.vertex_index + 2];
-					glm::vec3 position(vx, vy, vz);
+					vertice.cords = {vx, vy, vz};
 
-					//if the vertex at that position has not yet being processed
-                    if (vertices.count(position) == 0) {
-						const auto position_indice = static_cast<GLuint>(verts.size());
-                        vertices[position] = position_indice;
-						verts.push_back(position);
-						indices.push_back(position_indice);
-                    }else{
-						//if it already computed the point, it adds the indice and goes to next loop interation
-						indices.push_back(vertices[position]);
-						continue;
-					}
 
                     if (idx.normal_index != -1) {
                         const float nx = attrib.normals[3 * idx.normal_index + 0];
                         const float ny = attrib.normals[3 * idx.normal_index + 1];
                         const float nz = attrib.normals[3 * idx.normal_index + 2];
-						normals.push_back(glm::vec3(nx,ny,nz));
-                    }else{
+						//normals.push_back(glm::vec3(nx,ny,nz));
+						vertice.normals = {nx, ny, nz};
+					}else{
 						//add a default value to not disilign the vectors for rendering
-						normals.push_back(glm::vec3(0,0,0));
+						//normals.push_back(glm::vec3(0,0,0));
+						vertice.normals = {0, 0, 0};
 					}
 
                     if (idx.texcoord_index != -1) {
                         const float u = attrib.texcoords[2 * idx.texcoord_index + 0];
                         const float v = attrib.texcoords[2 * idx.texcoord_index + 1];
-						texture_cords.push_back(glm::vec2(u,v));
+						//texture_cords.push_back(glm::vec2(u,v));
+						vertice.texture = {u, v};
                     }else{
-						texture_cords.push_back(glm::vec2(0,0));
+						//texture_cords.push_back(glm::vec2(0,0));
+						vertice.texture = {0, 0};
+					}
+
+					//if the vertex at that position has not yet being processed
+                    if (vertices.count(vertice) == 0) {
+						//adds its idx to the render indexes
+						const auto position_indice = static_cast<GLuint>(verts.size());
+                        vertices[vertice] = position_indice;
+						indices.push_back(position_indice);
+						//and adds the values to their respective vectors
+						verts.push_back(vertice.cords);
+						normals.push_back(vertice.normals);
+						texture_cords.push_back(vertice.texture);
+                    }else{
+						//if it already computed the point, it adds only the indice of that old vertice instead
+						indices.push_back(vertices[vertice]);
 					}
 				}
 			}

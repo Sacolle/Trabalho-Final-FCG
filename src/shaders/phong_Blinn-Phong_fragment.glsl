@@ -34,7 +34,9 @@ struct LightFont{
 };
 
 vec4 getFlashlightDir(vec4 camera_position){
-    if(paused) return normalize(camera_dir);
+    if(paused){
+		return normalize(camera_dir);
+	}
 
     vec4 flashlight_dir = player_pos - camera_position;
     flashlight_dir.y = 0;
@@ -42,10 +44,11 @@ vec4 getFlashlightDir(vec4 camera_position){
 }
 
 vec4 getFlashlightPos(vec4 camera_position, vec4 flashlight_dir){
-    if(paused)
+    if(paused){
         return camera_position;
-    else
+	}else{
         return player_pos + vec4(0.0,2.0,0.0,0.0) - flashlight_dir * 8;
+	}
 }
 
 LightFont getLightFont(vec4 p, vec4 flashlight_dir, vec4 flashlight_pos, float flashlight_angle, float flashlight_range, vec4 spotlight_pos, vec4 spotlight_dir, float spotlight_angle){

@@ -44,7 +44,7 @@ namespace controler{
 				std::shared_ptr<entity::Entity> tile(
 					new entity::Entity(
 						glm::vec4(x_pos,-1.0f,z_pos,1.0f),
-						gouraud_phong,
+						phong_phong,
 						tile_meshes.at(tile_val)
 					)
 				);

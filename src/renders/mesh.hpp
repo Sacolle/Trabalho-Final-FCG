@@ -15,6 +15,9 @@
 #include "shader.hpp"
 
 namespace render{
+
+	struct Vertex;
+
 	class Mesh{
 		public:
 			Mesh(
@@ -92,6 +95,12 @@ namespace render{
 			std::vector<GLuint> indexs;
 	};
 
+	struct Vertex {
+		glm::vec3 cords;
+		glm::vec3 normals;
+		glm::vec2 texture;
+	};
+
 	template <class T>
 	inline void hash_combine(std::size_t& seed, const T& v){
 		std::hash<T> hasher;
@@ -107,14 +116,31 @@ namespace render{
 			return seed;
 		}
 	};
-	/*
-	//podia ser facil, mas nãoooooooooooooo
-	struct pair_equal_to : std::binary_function<std::pair<int,int>, std::pair<int,int>, bool>
-	{
-		bool operator()(std::pair<int,int> const& x, std::pair<int,int> const& y) const
-		{
-			return (x.first == y.first && x.second == y.second);
+
+	struct vertice_hash : std::unary_function<struct Vertex, std::size_t>{
+		std::size_t operator()(struct Vertex const& vert) const {
+			std::size_t seed = 0;
+			hash_combine(seed,vert.cords.x);
+			hash_combine(seed,vert.cords.y);
+			hash_combine(seed,vert.cords.z);
+			hash_combine(seed,vert.normals.x);
+			hash_combine(seed,vert.normals.y);
+			hash_combine(seed,vert.normals.z);
+			hash_combine(seed,vert.texture.x);
+			hash_combine(seed,vert.texture.y);
+			return seed;
 		}
 	};
-	*/
+
+	struct vertice_equal_to : std::binary_function<struct Vertex, struct Vertex, bool>
+	{
+		bool operator()(struct Vertex const& v0, struct Vertex const& v1) const {
+			return 
+				(v0.cords.x == v1.cords.x && v0.cords.y == v1.cords.y && v0.cords.z == v1.cords.z) &&
+				(v0.normals.x == v1.normals.x && v0.normals.y == v1.normals.y && v0.normals.z == v1.normals.z) &&
+				(v0.texture.x == v1.texture.x && v0.texture.y == v1.texture.y);
+		}
+	};
+
+
 }
